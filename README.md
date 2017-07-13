@@ -11,12 +11,12 @@ Receiving status:
   - physical disks 
   - virtual disks
 
-Dependencies:
+Dependencies
   - None
 
-Usage:
-  LLD:
+Usage
+  - LLD:
   
-  [user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
+    [user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
   
-  [user@server ~] # {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
+    [user@server ~] # {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
