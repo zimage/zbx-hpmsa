@@ -17,4 +17,5 @@ Dependencies:
 Usage:
   LLD:
   [user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
+  
   [user@server ~] # {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
