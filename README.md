@@ -16,5 +16,5 @@ Dependencies:
 
 Usage:
   LLD:
-  # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
-  # {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
+  $ ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
+  $ {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
