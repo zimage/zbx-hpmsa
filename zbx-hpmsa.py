@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
 from lxml import etree
-from os import path, makedirs, name, access, getenv, chmod
+from os import path, makedirs, name as os_name, access, getenv, chmod
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
 from json import dumps
 from socket import gethostbyname
 from requests import get as req_get
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, SSLError
 
 
-def get_skey(storage, login, password, use_cache=True):
+def get_skey(storage, login, password, use_https=False, use_cache=True):
     """
     Get's session key from HP MSA API.
     :param storage:
@@ -22,12 +22,18 @@ def get_skey(storage, login, password, use_cache=True):
     String with MSA password.
     :param use_cache:
     The function will try to save session key to disk.
+    :param use_https:
+    Use https instead http to connect to storage controller.
     :return:
     Session key as <str> or error code as <str>
     """
 
+    # path to CA file
+    # ca_file = '/etc/ssl/certs/ca-bundle.crt'
+    ca_file = "C:\\temp\\rg-rus-ca.cer"
+
     # Determine the path to store cache skey file
-    if name == 'posix':
+    if os_name == 'posix':
         tmp_dir = '/tmp/zbx-hpmsa/'
         # Create temp dir if it's not exists
         if not path.exists(tmp_dir):
@@ -41,7 +47,7 @@ def get_skey(storage, login, password, use_cache=True):
         tmp_dir = ''
 
     # Cache file name
-    cache_file = tmp_dir + 'zbx-hpmsa_{str}.skey'.format(str=storage)
+    cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
 
     # Trying to use cached session key
     if use_cache is True and path.exists(cache_file):
@@ -54,16 +60,20 @@ def get_skey(storage, login, password, use_cache=True):
                 else:
                     raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
         else:
-            return get_skey(storage, login, password, use_cache=False)
+            return get_skey(storage, login, password, use_https=use_https, use_cache=False)
     else:
         # Combine login and password to 'login_password' format.
         login_data = '_'.join([login, password])
         login_hash = md5(login_data.encode()).hexdigest()
-        # Forming URL to get auth token
-        login_url = 'http://{str}/api/login/{hash}'.format(str=storage, hash=login_hash)
-        # Trying to make GET query
+
+        # Forming URL and trying to make GET query
         try:
-            rsp_content = req_get(login_url).content
+            if not use_https:  # http
+                login_url = 'http://{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
+                rsp_content = req_get(login_url).content
+            else:  # https
+                login_url = 'https://{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
+                rsp_content = req_get(login_url, verify=ca_file).content
 
             # Processing XML
             xml_data = etree.fromstring(rsp_content)
@@ -78,17 +88,21 @@ def get_skey(storage, login, password, use_cache=True):
             # 2 - Authentication Unsuccessful, return 2 as <str>
             elif return_code == '2':
                 return return_code
+        except SSLError:
+            raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
         except ConnectionError:
-            raise SystemExit("ERROR: Cannot connect to '{url}'".format(url=login_url))
+            raise SystemExit("ERROR: Cannot connect to storage'.")
 
 
-def query_xmlapi(url, sessionkey):
+def query_xmlapi(url, sessionkey, use_https=True):
     """
     Making HTTP request to HP MSA XML API and returns it's response as 3-element tuple.
     :param url:
     URL to make GET request in <str>.
     :param sessionkey:
     Session key to authorize in <str>.
+    :param use_https:
+    Use HTTPS instead HTTP.
     :return:
     Tuple with return code <str>, return description <str> and etree object <xml.etree.ElementTree.Element>.
     """
@@ -96,9 +110,18 @@ def query_xmlapi(url, sessionkey):
     # Helps with debug info
     cur_fname = query_xmlapi.__name__
 
+    # ca_file = '/etc/ssl/certs/ca-bundle.crt'
+    ca_file = "C:\\temp\\rg-rus-ca.cer"
+
     # Makes GET request to URL
     try:
-        response = req_get(url, headers={'sessionKey': sessionkey})
+        if not use_https:  # http
+            url = 'http://' + url
+            response = req_get(url, headers={'sessionKey': sessionkey})
+        else:  # https
+            print('USE HTTPS')
+            url = 'https://' + url
+            response = req_get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
     except ConnectionError:
         raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=url))
 
@@ -139,9 +162,9 @@ def get_health(storage, sessionkey, component, item):
 
     # Forming URL
     if component in ('vdisks', 'disks'):
-        get_url = 'http://{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
+        get_url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
     elif component in ('controllers', 'enclosures'):
-        get_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+        get_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
 
@@ -196,7 +219,7 @@ def make_discovery(storage, sessionkey, component):
     cur_fname = make_discovery.__name__
 
     # Forming URL
-    show_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+    show_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Making HTTP request to pull needed data
     response = query_xmlapi(show_url, sessionkey)
@@ -210,7 +233,7 @@ def make_discovery(storage, sessionkey, component):
         raise SystemExit("ERROR: {rd}".format(rd=resp_description))
 
     # Eject XML from response
-    if component is not None or len(component) != 0:
+    if component is not None:
         all_components = []
         if component.lower() == 'vdisks':
             for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
@@ -265,7 +288,7 @@ def get_all(storage, sessionkey, component):
     # Helps with forming debug info
     cur_fname = get_all.__name__
 
-    get_url = 'http://{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
+    get_url = '{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
     # Trying to open the url
     response = query_xmlapi(get_url, sessionkey)
 
@@ -351,17 +374,23 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
+    parser.add_argument('--https', action='store_true', help='Use https instead http.')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
-    # Define MSA Controller IP address (useful, if we have 2-ctrl configuration)
-    if args.msa:
-        msa_ip = gethostbyname(args.msa)
+    # Set msa_connect - IP or DNS name
+    if args.msa and args.https:
+        msa_connect = args.msa
+    elif args.msa and not args.https:
+        msa_connect = gethostbyname(args.msa)
     else:
         raise SystemExit("ERROR: Missed mandatory argument '-m|--msa'.")
 
     # Getting session key
-    skey = get_skey(storage=msa_ip, login=args.user, password=args.password, use_cache=True)
+    if not args.https:  # http
+        skey = get_skey(storage=msa_connect, login=args.user, password=args.password)
+    else:  # https
+        skey = get_skey(storage=msa_connect, login=args.user, password=args.password, use_https=True)
 
     if skey != '2':
         # Make no possible to use '--discovery' and '--get' options together
@@ -370,13 +399,13 @@ if __name__ == '__main__':
 
         # If gets '--discovery' argument, make discovery
         elif args.discovery:
-            print(make_discovery(msa_ip, skey, args.component))
+            print(make_discovery(msa_connect, skey, args.component))
         # If gets '--get' argument, getting component's health
         elif args.get and args.get != 'all':
-            print(get_health(msa_ip, skey, args.component, args.get))
+            print(get_health(msa_connect, skey, args.component, args.get))
         # Making bulk request for all possible component statuses
         elif args.get == 'all':
-            print(get_all(msa_ip, skey, args.component))
+            print(get_all(msa_connect, skey, args.component))
         else:
             raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
     else:
