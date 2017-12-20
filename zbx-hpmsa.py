@@ -11,7 +11,7 @@ from requests import get as req_get
 from requests.exceptions import ConnectionError, SSLError
 
 
-def get_skey(storage, login, password, use_https=False, use_cache=True):
+def get_skey(storage, login, password, use_cache=True):
     """
     Get's session key from HP MSA API.
     :param storage:
@@ -22,15 +22,9 @@ def get_skey(storage, login, password, use_https=False, use_cache=True):
     String with MSA password.
     :param use_cache:
     The function will try to save session key to disk.
-    :param use_https:
-    Use https instead http to connect to storage controller.
     :return:
     Session key as <str> or error code as <str>
     """
-
-    # path to CA file
-    # ca_file = '/etc/ssl/certs/ca-bundle.crt'
-    ca_file = "C:\\temp\\rg-rus-ca.cer"
 
     # Determine the path to store cache skey file
     if os_name == 'posix':
@@ -60,7 +54,7 @@ def get_skey(storage, login, password, use_https=False, use_cache=True):
                 else:
                     raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
         else:
-            return get_skey(storage, login, password, use_https=use_https, use_cache=False)
+            return get_skey(storage, login, password, use_cache=False)
     else:
         # Combine login and password to 'login_password' format.
         login_data = '_'.join([login, password])
@@ -68,17 +62,10 @@ def get_skey(storage, login, password, use_https=False, use_cache=True):
 
         # Forming URL and trying to make GET query
         try:
-            if not use_https:  # http
-                login_url = 'http://{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
-                rsp_content = req_get(login_url).content
-            else:  # https
-                login_url = 'https://{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
-                rsp_content = req_get(login_url, verify=ca_file).content
+            login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
 
             # Processing XML
-            xml_data = etree.fromstring(rsp_content)
-            return_code = xml_data.find(".//PROPERTY[@name='return-code']").text
-            response_message = xml_data.find(".//PROPERTY[@name='response']").text
+            return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
             # 1 - success, return session key
             if return_code == '1':
@@ -94,21 +81,21 @@ def get_skey(storage, login, password, use_https=False, use_cache=True):
             raise SystemExit("ERROR: Cannot connect to storage'.")
 
 
-def query_xmlapi(url, sessionkey, use_https=True):
+def query_xmlapi(url, sessionkey):
     """
     Making HTTP request to HP MSA XML API and returns it's response as 3-element tuple.
     :param url:
     URL to make GET request in <str>.
     :param sessionkey:
     Session key to authorize in <str>.
-    :param use_https:
-    Use HTTPS instead HTTP.
     :return:
     Tuple with return code <str>, return description <str> and etree object <xml.etree.ElementTree.Element>.
     """
 
     # Helps with debug info
     cur_fname = query_xmlapi.__name__
+    # Global variable points to use HTTPS or not
+    global use_https
 
     # ca_file = '/etc/ssl/certs/ca-bundle.crt'
     ca_file = "C:\\temp\\rg-rus-ca.cer"
@@ -119,13 +106,14 @@ def query_xmlapi(url, sessionkey, use_https=True):
             url = 'http://' + url
             response = req_get(url, headers={'sessionKey': sessionkey})
         else:  # https
-            print('USE HTTPS')
             url = 'https://' + url
             response = req_get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+    except SSLError:
+        raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except ConnectionError:
-        raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=url))
+        raise SystemExit("ERROR: Cannot connect to storage.")
 
-    # Reading data from server response
+    # Reading data from server XML response
     try:
         response_xml = etree.fromstring(response.content)
 
@@ -134,8 +122,7 @@ def query_xmlapi(url, sessionkey, use_https=True):
         description = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
 
         # Placing all data to the tuple which will be returned
-        return_tuple = (return_code, description, response_xml)
-        return return_tuple
+        return return_code, description, response_xml
     except ValueError as e:
         raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
     except AttributeError as e:
@@ -366,11 +353,11 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
     parser.add_argument('-g', '--get', type=str, help='ID of MSA part which status we want to get',
-                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<ENCLOSUREID>|all')
+                        metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
-                        metavar='[<IP>|<DNSNAME>]')
+                        metavar='[IP|DNSNAME]')
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
@@ -378,19 +365,18 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
-    # Set msa_connect - IP or DNS name
+    # Set msa_connect - IP or DNS name and determine to use https or not
     if args.msa and args.https:
         msa_connect = args.msa
+        use_https = True
     elif args.msa and not args.https:
+        use_https = False
         msa_connect = gethostbyname(args.msa)
     else:
         raise SystemExit("ERROR: Missed mandatory argument '-m|--msa'.")
 
     # Getting session key
-    if not args.https:  # http
-        skey = get_skey(storage=msa_connect, login=args.user, password=args.password)
-    else:  # https
-        skey = get_skey(storage=msa_connect, login=args.user, password=args.password, use_https=True)
+    skey = get_skey(storage=msa_connect, login=args.user, password=args.password)
 
     if skey != '2':
         # Make no possible to use '--discovery' and '--get' options together
