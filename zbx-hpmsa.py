@@ -26,8 +26,11 @@ def get_skey(storage, login, password, use_cache=True):
     Session key as <str> or error code as <str>
     """
 
+    # Global variable points to use HTTPS or not
+    global use_https
+
     # Determine the path to store cache skey file
-    if os_name == 'posix':
+    if os_name == 'posix' and not use_https:
         tmp_dir = '/tmp/zbx-hpmsa/'
         # Create temp dir if it's not exists
         if not path.exists(tmp_dir):
@@ -44,7 +47,7 @@ def get_skey(storage, login, password, use_cache=True):
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
 
     # Trying to use cached session key
-    if use_cache is True and path.exists(cache_file):
+    if not use_https and use_cache and path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=15)
         cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
         if cache_alive < cache_file_mtime:
@@ -67,10 +70,11 @@ def get_skey(storage, login, password, use_cache=True):
             # Processing XML
             return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
-            # 1 - success, return session key
+            # 1 - success, write cache in file and return session key
             if return_code == '1':
-                with open(cache_file, 'w') as skey_file:
-                    skey_file.write("{skey}".format(skey=response_message))
+                if not use_https:
+                    with open(cache_file, 'w') as skey_file:
+                        skey_file.write("{skey}".format(skey=response_message))
                 return response_message
             # 2 - Authentication Unsuccessful, return 2 as <str>
             elif return_code == '2':
@@ -94,11 +98,12 @@ def query_xmlapi(url, sessionkey):
 
     # Helps with debug info
     cur_fname = query_xmlapi.__name__
+
     # Global variable points to use HTTPS or not
     global use_https
 
-    # ca_file = '/etc/ssl/certs/ca-bundle.crt'
-    ca_file = "C:\\temp\\rg-rus-ca.cer"
+    # Set file where we can find root CA for our storages
+    ca_file = '/etc/ssl/certs/ca-bundle.crt'
 
     # Makes GET request to URL
     try:
@@ -119,10 +124,10 @@ def query_xmlapi(url, sessionkey):
 
         # Parse result XML to get return code and description
         return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
-        description = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
+        return_response = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
 
         # Placing all data to the tuple which will be returned
-        return return_code, description, response_xml
+        return return_code, return_response, response_xml
     except ValueError as e:
         raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
     except AttributeError as e:
@@ -144,9 +149,6 @@ def get_health(storage, sessionkey, component, item):
     HTTP response text in XML format.
     """
 
-    # Helps with forming debug info
-    cur_fname = get_health.__name__
-
     # Forming URL
     if component in ('vdisks', 'disks'):
         get_url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
@@ -155,13 +157,10 @@ def get_health(storage, sessionkey, component, item):
     else:
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
 
-    # Making HTTP request with last formed URL and session key from get_skey()
-    response = query_xmlapi(get_url, sessionkey)
-
-    if len(response) == 3:
-        resp_return_code, resp_description, resp_xml = response
-    else:
-        raise SystemExit("ERROR: ({f}) XML handle error".format(f=cur_fname))
+    # Making request to API
+    resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
+    if resp_return_code != '0':
+        raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Matching dict
     md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
@@ -202,22 +201,13 @@ def make_discovery(storage, sessionkey, component):
     JSON with discovery data.
     """
 
-    # Helps with debug info
-    cur_fname = make_discovery.__name__
-
     # Forming URL
     show_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
-    # Making HTTP request to pull needed data
-    response = query_xmlapi(show_url, sessionkey)
-    # If we've got 3 element tuple it's OK
-    if len(response) == 3:
-        resp_return_code, resp_description, resp_xml = response
-    else:
-        raise SystemExit("ERROR: ({f}) XML handle error".format(f=cur_fname))
-
+    # Making request to API
+    resp_return_code, resp_description, resp_xml = query_xmlapi(show_url, sessionkey)
     if resp_return_code != '0':
-        raise SystemExit("ERROR: {rd}".format(rd=resp_description))
+        raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Eject XML from response
     if component is not None:
@@ -253,7 +243,7 @@ def make_discovery(storage, sessionkey, component):
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
-        raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers, enclosures)')
+        raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
 
 
 def get_all(storage, sessionkey, component):
@@ -272,77 +262,72 @@ def get_all(storage, sessionkey, component):
     {"vdisk01": { "health": "OK" }, vdisk02: {"health": "OK"} }
     """
 
-    # Helps with forming debug info
-    cur_fname = get_all.__name__
-
     get_url = '{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
-    # Trying to open the url
-    response = query_xmlapi(get_url, sessionkey)
+
+    # Making request to API
+    resp_return_code, resp_description, xml = query_xmlapi(get_url, sessionkey)
+    if resp_return_code != '0':
+        raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Processing XML if response code 0
-    if response[0] == '0':
-        xml = response[2]
-        all_components = {}
-        if component == 'disks':
-            for PROP in xml.findall("OBJECT[@name='drive']"):
-                # Getting data from XML
-                disk_location = PROP.find("PROPERTY[@name='location']").text
-                disk_health = PROP.find("PROPERTY[@name='health']").text
-                disk_temp = PROP.find("PROPERTY[@name='temperature-numeric']").text
-                disk_work_hours = PROP.find("PROPERTY[@name='power-on-hours']").text
-                # Making dict with one disk data
-                disk_info = {
-                        "health": disk_health,
-                        "temperature": disk_temp,
-                        "work_hours": disk_work_hours
-                }
-                # Adding one disk to common dict
-                all_components[disk_location] = disk_info
-        elif component == 'vdisks':
-            for PROP in xml.findall("OBJECT[@name='virtual-disk']"):
-                # Getting data from XML
-                vdisk_name = PROP.find("PROPERTY[@name='name']").text
-                vdisk_health = PROP.find("PROPERTY[@name='health']").text
+    all_components = {}
+    if component == 'disks':
+        for PROP in xml.findall("OBJECT[@name='drive']"):
+            # Getting data from XML
+            disk_location = PROP.find("PROPERTY[@name='location']").text
+            disk_health = PROP.find("PROPERTY[@name='health']").text
+            disk_temp = PROP.find("PROPERTY[@name='temperature-numeric']").text
+            disk_work_hours = PROP.find("PROPERTY[@name='power-on-hours']").text
+            # Making dict with one disk data
+            disk_info = {
+                    "health": disk_health,
+                    "temperature": disk_temp,
+                    "work_hours": disk_work_hours
+            }
+            # Adding one disk to common dict
+            all_components[disk_location] = disk_info
+    elif component == 'vdisks':
+        for PROP in xml.findall("OBJECT[@name='virtual-disk']"):
+            # Getting data from XML
+            vdisk_name = PROP.find("PROPERTY[@name='name']").text
+            vdisk_health = PROP.find("PROPERTY[@name='health']").text
 
-                # Making dict with one vdisk data
-                vdisk_info = {
-                        "health": vdisk_health
+            # Making dict with one vdisk data
+            vdisk_info = {
+                    "health": vdisk_health
+            }
+            # Adding one vdisk to common dict
+            all_components[vdisk_name] = vdisk_info
+    elif component == 'controllers':
+        for PROP in xml.findall("OBJECT[@name='controllers']"):
+            # Getting data from XML
+            ctrl_id = PROP.find("PROPERTY[@name='controller-id']").text
+            ctrl_health = PROP.find("PROPERTY[@name='health']").text
+            cf_health = PROP.find("OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
+            # Getting info for all FC ports
+            ports_info = {}
+            for FC_PORT in PROP.findall("OBJECT[@name='ports']"):
+                port_name = FC_PORT.find("PROPERTY[@name='port']").text
+                port_health = FC_PORT.find("PROPERTY[@name='health']").text
+                port_status = FC_PORT.find("PROPERTY[@name='status']").text
+                sfp_status = FC_PORT.find("OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
+                # Puts all info into dict
+                ports_info[port_name] = {
+                    "health": port_health,
+                    "status": port_status,
+                    "sfp_status": sfp_status
                 }
-                # Adding one vdisk to common dict
-                all_components[vdisk_name] = vdisk_info
-        elif component == 'controllers':
-            for PROP in xml.findall("OBJECT[@name='controllers']"):
-                # Getting data from XML
-                ctrl_id = PROP.find("PROPERTY[@name='controller-id']").text
-                ctrl_health = PROP.find("PROPERTY[@name='health']").text
-                cf_health = PROP.find("OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
-                # Getting info for all FC ports
-                ports_info = {}
-                for FC_PORT in PROP.findall("OBJECT[@name='ports']"):
-                    port_name = FC_PORT.find("PROPERTY[@name='port']").text
-                    port_health = FC_PORT.find("PROPERTY[@name='health']").text
-                    port_status = FC_PORT.find("PROPERTY[@name='status']").text
-                    sfp_status = FC_PORT.find("OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
-                    # Puts all info into dict
-                    ports_info[port_name] = {
-                        "health": port_health,
-                        "status": port_status,
-                        "sfp_status": sfp_status
-                    }
-                    # Making final dict with info of the one controller
-                    ctrl_info = {
-                        "health": ctrl_health,
-                        "cf_health": cf_health,
-                        "ports": ports_info
-                    }
-                    all_components[ctrl_id] = ctrl_info
-        else:
-            raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
-        # Making JSON with dumps() and return it (separators needs to make JSON compact)
-        return dumps(all_components, separators=(',', ':'))
+                # Making final dict with info of the one controller
+                ctrl_info = {
+                    "health": ctrl_health,
+                    "cf_health": cf_health,
+                    "ports": ports_info
+                }
+                all_components[ctrl_id] = ctrl_info
     else:
-        raise SystemExit("ERROR: ({f}) : Response code from API is {rc} ({rm})".format(f=cur_fname, rc=response[0],
-                                                                                       rm=response[1]))
+        raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+    # Making JSON with dumps() and return it (separators needs to make JSON compact)
+    return dumps(all_components, separators=(',', ':'))
 
 
 if __name__ == '__main__':
@@ -365,10 +350,14 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
+    # Make no possible to use '--discovery' and '--get' options together
+    if args.discovery and args.get:
+        raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
+
     # Set msa_connect - IP or DNS name and determine to use https or not
     if args.msa and args.https:
-        msa_connect = args.msa
         use_https = True
+        msa_connect = args.msa
     elif args.msa and not args.https:
         use_https = False
         msa_connect = gethostbyname(args.msa)
@@ -379,12 +368,8 @@ if __name__ == '__main__':
     skey = get_skey(storage=msa_connect, login=args.user, password=args.password)
 
     if skey != '2':
-        # Make no possible to use '--discovery' and '--get' options together
-        if args.discovery and args.get:
-            raise SystemExit("Syntax error: You cannot use both '--discovery' and '--get' options.")
-
         # If gets '--discovery' argument, make discovery
-        elif args.discovery:
+        if args.discovery:
             print(make_discovery(msa_connect, skey, args.component))
         # If gets '--get' argument, getting component's health
         elif args.get and args.get != 'all':
