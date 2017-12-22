@@ -42,6 +42,7 @@ Enables discovery mode.
 **-c|--component**  
 Sets component to request.  
 **-g|--get**  
+Get component health status.  
 **-v|--version**  
 Prints script version and exit.  
 **--https**  
