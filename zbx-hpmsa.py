@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
+import os
+import requests
 from lxml import etree
-from os import path, makedirs, name as os_name, access, getenv, chmod
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
 from json import dumps
 from socket import gethostbyname
-from requests import get as req_get
-from requests.exceptions import ConnectionError, SSLError
 
 
 def get_skey(storage, login, password, use_cache=True):
@@ -30,15 +29,16 @@ def get_skey(storage, login, password, use_cache=True):
     global use_https
 
     # Determine the path to store cache skey file
-    if os_name == 'posix' and not use_https:
-        tmp_dir = '/tmp/zbx-hpmsa/'
+    if os.name == 'posix' and not use_https:
+        tmp_dir = '/tmp/zbx-hpmsa-dev/'
         # Create temp dir if it's not exists
-        if not path.exists(tmp_dir):
-            makedirs(tmp_dir)
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
             # Making temp dir writable for zabbix user and group
-            chmod(tmp_dir, 0o770)
-        elif not access(tmp_dir, 2):  # 2 - os.W_OK:
-            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir, user=getenv('USER')))
+            os.chmod(tmp_dir, 0o770)
+        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
+            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir,
+                                                                                     user=os.getenv('USER')))
     else:
         # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
         tmp_dir = ''
@@ -47,12 +47,12 @@ def get_skey(storage, login, password, use_cache=True):
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
 
     # Trying to use cached session key
-    if not use_https and use_cache and path.exists(cache_file):
+    if not use_https and use_cache and os.path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=15)
-        cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
+        cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as skey_file:
-                if access(cache_file, 4):  # 4 - os.R_OK
+                if os.access(cache_file, 4):  # 4 - os.R_OK
                     return skey_file.read()
                 else:
                     raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
@@ -64,25 +64,20 @@ def get_skey(storage, login, password, use_cache=True):
         login_hash = md5(login_data.encode()).hexdigest()
 
         # Forming URL and trying to make GET query
-        try:
-            login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
+        login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
 
-            # Processing XML
-            return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
+        # Processing XML
+        return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
-            # 1 - success, write cache in file and return session key
-            if return_code == '1':
-                if not use_https:
-                    with open(cache_file, 'w') as skey_file:
-                        skey_file.write("{skey}".format(skey=response_message))
-                return response_message
-            # 2 - Authentication Unsuccessful, return 2 as <str>
-            elif return_code == '2':
-                return return_code
-        except SSLError:
-            raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
-        except ConnectionError:
-            raise SystemExit("ERROR: Cannot connect to storage'.")
+        # 1 - success, write cache in file and return session key
+        if return_code == '1':
+            if not use_https:
+                with open(cache_file, 'w') as skey_file:
+                    skey_file.write("{skey}".format(skey=response_message))
+            return response_message
+        # 2 - Authentication Unsuccessful, return 2 as <str>
+        elif return_code == '2':
+            return return_code
 
 
 def query_xmlapi(url, sessionkey):
@@ -109,13 +104,13 @@ def query_xmlapi(url, sessionkey):
     try:
         if not use_https:  # http
             url = 'http://' + url
-            response = req_get(url, headers={'sessionKey': sessionkey})
+            response = requests.get(url, headers={'sessionKey': sessionkey})
         else:  # https
             url = 'https://' + url
-            response = req_get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
-    except SSLError:
+            response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+    except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
-    except ConnectionError:
+    except requests.exceptions.ConnectionError:
         raise SystemExit("ERROR: Cannot connect to storage.")
 
     # Reading data from server XML response
@@ -128,9 +123,7 @@ def query_xmlapi(url, sessionkey):
 
         # Placing all data to the tuple which will be returned
         return return_code, return_response, response_xml
-    except ValueError as e:
-        raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
-    except AttributeError as e:
+    except (ValueError, AttributeError) as e:
         raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
 
 
@@ -332,7 +325,7 @@ def get_all(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.1'
+    VERSION = '0.3.2'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
@@ -355,14 +348,16 @@ if __name__ == '__main__':
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Set msa_connect - IP or DNS name and determine to use https or not
-    if args.msa and args.https:
+    if args.https:
         use_https = True
         msa_connect = args.msa
-    elif args.msa and not args.https:
+    else:
         use_https = False
         msa_connect = gethostbyname(args.msa)
-    else:
-        raise SystemExit("ERROR: Missed mandatory argument '-m|--msa'.")
+
+    # Make no possible to use '--discovery' and '--get' options together
+    if args.discovery and args.get:
+        raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Getting session key
     skey = get_skey(storage=msa_connect, login=args.user, password=args.password)
