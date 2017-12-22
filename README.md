@@ -45,11 +45,6 @@ Enables discovery mode.
 **-c|--component**  
 Sets component to request.  
 **-g|--get**  
-<<<<<<< HEAD
-Sets component item to request.  
-=======
-Sets component item to request.
->>>>>>> DEV
 **-v|--version**  
 Prints script version and exit.  
 
