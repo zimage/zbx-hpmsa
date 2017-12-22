@@ -30,9 +30,6 @@ Component status:
  - [x] controllers
  - [x] Enclosures
 
-## TODO
-- [ ] HTTPS support
-
 ## Supported arguments  
 **-m|--msa**  
 HPE MSA DNS name or IP address.  
