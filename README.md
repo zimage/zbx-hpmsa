@@ -44,6 +44,9 @@ Sets component to request.
 **-g|--get**  
 **-v|--version**  
 Prints script version and exit.  
+**--https**  
+Using HTTPS instead HTTP.
+
 
 ## Usage
 - LLD of enclosures, controllers, virtual disks and physical disks:
