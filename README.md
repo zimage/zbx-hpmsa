@@ -16,6 +16,7 @@ Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn
 Common:
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [x] Session key cache (MSA login cache)
+ - [x] HTTPS support (with limitations, look relevant section in Wiki)
 
 Low Level Discovery:
  - [x] physical disks 
@@ -44,7 +45,11 @@ Enables discovery mode.
 **-c|--component**  
 Sets component to request.  
 **-g|--get**  
+<<<<<<< HEAD
 Sets component item to request.  
+=======
+Sets component item to request.
+>>>>>>> DEV
 **-v|--version**  
 Prints script version and exit.  
 
