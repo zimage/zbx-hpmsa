@@ -12,23 +12,26 @@ Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn
  - requests
  - lxml (experimental, may be replaced with 'xml' from Python stdlib)
 
-**Feautres**  
-Common:
+## Feautres  
+**Common:**
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [x] Session key cache (MSA login cache)
  - [x] HTTPS support (with limitations, look relevant section in Wiki)
 
-Low Level Discovery:
+**Low Level Discovery:**
  - [x] physical disks 
  - [x] virtual disks
  - [x] controllers
  - [x] Enclosures
 
-Component status:
+**Component status:**
  - [x] physical disks 
  - [x] virtual disks
  - [x] controllers
  - [x] Enclosures
+
+## TODO  
+- [ ] Bulk requests for enclosures
 
 ## Supported arguments  
 **-m|--msa**  
