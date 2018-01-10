@@ -265,12 +265,12 @@ def get_all(storage, sessionkey, component):
     # Processing XML if response code 0
     all_components = {}
     if component == 'disks':
-        for PROP in xml.findall("OBJECT[@name='drive']"):
+        for PROP in xml.findall("./OBJECT[@name='drive']"):
             # Getting data from XML
-            disk_location = PROP.find("PROPERTY[@name='location']").text
-            disk_health = PROP.find("PROPERTY[@name='health']").text
-            disk_temp = PROP.find("PROPERTY[@name='temperature-numeric']").text
-            disk_work_hours = PROP.find("PROPERTY[@name='power-on-hours']").text
+            disk_location = PROP.find("./PROPERTY[@name='location']").text
+            disk_health = PROP.find("./PROPERTY[@name='health']").text
+            disk_temp = PROP.find("./PROPERTY[@name='temperature-numeric']").text
+            disk_work_hours = PROP.find("./PROPERTY[@name='power-on-hours']").text
             # Making dict with one disk data
             disk_info = {
                     "health": disk_health,
@@ -280,10 +280,10 @@ def get_all(storage, sessionkey, component):
             # Adding one disk to common dict
             all_components[disk_location] = disk_info
     elif component == 'vdisks':
-        for PROP in xml.findall("OBJECT[@name='virtual-disk']"):
+        for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
             # Getting data from XML
-            vdisk_name = PROP.find("PROPERTY[@name='name']").text
-            vdisk_health = PROP.find("PROPERTY[@name='health']").text
+            vdisk_name = PROP.find("./PROPERTY[@name='name']").text
+            vdisk_health = PROP.find("./PROPERTY[@name='health']").text
 
             # Making dict with one vdisk data
             vdisk_info = {
@@ -292,18 +292,18 @@ def get_all(storage, sessionkey, component):
             # Adding one vdisk to common dict
             all_components[vdisk_name] = vdisk_info
     elif component == 'controllers':
-        for PROP in xml.findall("OBJECT[@name='controllers']"):
+        for PROP in xml.findall("./OBJECT[@name='controllers']"):
             # Getting data from XML
-            ctrl_id = PROP.find("PROPERTY[@name='controller-id']").text
-            ctrl_health = PROP.find("PROPERTY[@name='health']").text
-            cf_health = PROP.find("OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
+            ctrl_id = PROP.find("./PROPERTY[@name='controller-id']").text
+            ctrl_health = PROP.find("./PROPERTY[@name='health']").text
+            cf_health = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
             # Getting info for all FC ports
             ports_info = {}
-            for FC_PORT in PROP.findall("OBJECT[@name='ports']"):
-                port_name = FC_PORT.find("PROPERTY[@name='port']").text
-                port_health = FC_PORT.find("PROPERTY[@name='health']").text
-                port_status = FC_PORT.find("PROPERTY[@name='status']").text
-                sfp_status = FC_PORT.find("OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
+            for FC_PORT in PROP.findall("./OBJECT[@name='ports']"):
+                port_name = FC_PORT.find("./PROPERTY[@name='port']").text
+                port_health = FC_PORT.find("./PROPERTY[@name='health']").text
+                port_status = FC_PORT.find("./PROPERTY[@name='status']").text
+                sfp_status = FC_PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
                 # Puts all info into dict
                 ports_info[port_name] = {
                     "health": port_health,
@@ -317,6 +317,33 @@ def get_all(storage, sessionkey, component):
                     "ports": ports_info
                 }
                 all_components[ctrl_id] = ctrl_info
+    elif component == 'enclosures':
+        for PROP in xml.findall("./OBJECT[@name='enclosures']"):
+            encl_id = PROP.find("./PROPERTY[@name='enclosure-id']").text
+            encl_health = PROP.find("./PROPERTY[@name='health']").text
+            encl_status = PROP.find("./PROPERTY[@name='status']").text
+            # Power supply info
+            ps_info = {}
+            for PS in PROP.findall("./OBJECT[@name='power-supplies']"):
+                ps_id = PS.find("./PROPERTY[@name='durable-id']").text
+                ps_name = PS.find("./PROPERTY[@name='name']").text
+                ps_health = PS.find("./PROPERTY[@name='health']").text
+                ps_status = PS.find("./PROPERTY[@name='status']").text
+                ps_temp = PS.find("./PROPERTY[@name='dctemp']").text
+                # Puts all info into dict
+                ps_info[ps_id] = {
+                    "name": ps_name,
+                    "health": ps_health,
+                    "status": ps_status,
+                    "temperature": ps_temp
+                }
+                # Making final dict with info of the one controller
+                encl_info = {
+                    "health": encl_health,
+                    "status": encl_status,
+                    "power_supplies": ps_info
+                }
+                all_components[encl_id] = encl_info
     else:
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
     # Making JSON with dumps() and return it (separators needs to make JSON compact)
@@ -325,7 +352,7 @@ def get_all(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.2'
+    VERSION = '0.3.3'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
