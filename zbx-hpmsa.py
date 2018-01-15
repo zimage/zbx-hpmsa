@@ -3,6 +3,7 @@
 import os
 import requests
 import json
+import urllib3
 from lxml import etree
 from datetime import datetime, timedelta
 from hashlib import md5
@@ -96,6 +97,7 @@ def query_xmlapi(url, sessionkey):
 
     # Global variable points to use HTTPS or not
     global use_https
+    global verify_ssl
 
     # Set file where we can find root CA for our storages
     ca_file = '/etc/ssl/certs/ca-bundle.crt'
@@ -107,7 +109,11 @@ def query_xmlapi(url, sessionkey):
             response = requests.get(url, headers={'sessionKey': sessionkey})
         else:  # https
             url = 'https://' + url
-            response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+            if verify_ssl:
+                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+            else:
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except requests.exceptions.ConnectionError:
@@ -367,11 +373,11 @@ def get_all(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.3'
+    VERSION = '0.3.4'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
-    parser.add_argument('-d', '--discovery', action='store_true')
+    parser.add_argument('-d', '--discovery', action='store_true', help='Making discovery')
     parser.add_argument('-g', '--get', type=str, help='ID of MSA part which status we want to get',
                         metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
@@ -381,7 +387,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
-    parser.add_argument('--https', action='store_true', help='Use https instead http.')
+    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
+                        metavar='[direct|verify]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
@@ -390,12 +397,9 @@ if __name__ == '__main__':
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Set msa_connect - IP or DNS name and determine to use https or not
-    if args.https:
-        use_https = True
-        msa_connect = args.msa
-    else:
-        use_https = False
-        msa_connect = gethostbyname(args.msa)
+    use_https = args.https in ['direct', 'verify']
+    verify_ssl = args.https == 'verify'
+    msa_connect = args.msa if use_https else gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
