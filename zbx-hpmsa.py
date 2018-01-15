@@ -2,11 +2,11 @@
 
 import os
 import requests
+import json
 from lxml import etree
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
-from json import dumps
 from socket import gethostbyname
 
 
@@ -198,43 +198,58 @@ def make_discovery(storage, sessionkey, component):
     show_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Making request to API
-    resp_return_code, resp_description, resp_xml = query_xmlapi(show_url, sessionkey)
+    resp_return_code, resp_description, xml = query_xmlapi(show_url, sessionkey)
     if resp_return_code != '0':
         raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Eject XML from response
     if component is not None:
         all_components = []
+        raw_json_part = ''
         if component.lower() == 'vdisks':
-            for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
+            for vdisk in xml.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.find("./PROPERTY[@name='name']").text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component.lower() == 'disks':
-            for disk in resp_xml.findall("./OBJECT[@name='drive']"):
+            for disk in xml.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.find("./PROPERTY[@name='location']").text
                 disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
         elif component.lower() == 'controllers':
-            for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
+            for ctrl in xml.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
                 ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
                 ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
+                all_ports = [port.find("./PROPERTY[@name='port']").text
+                             for port in ctrl.findall("./OBJECT[@name='ports']")]
+                for port in all_ports:
+                    raw_json_part += '{{"{{#PORTNAME}}":"{}"}},'.format(port)
+                # Forming final dict
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
                 all_components.append(ctrl_dict)
         elif component.lower() == 'enclosures':
-            for encl in resp_xml.findall(".OBJECT[@name='enclosures']"):
+            for encl in xml.findall(".OBJECT[@name='enclosures']"):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+                all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
+                          for PS in encl.findall("./OBJECT[@name='power-supplies']")]
+                for ps in all_ps:
+                    raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
+                # Forming final dict
                 encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
                              "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
                 all_components.append(encl_dict)
-        to_json = {"data": all_components}
-        return dumps(to_json, separators=(',', ':'))
+
+        # Dumps JSON and return it
+        if not raw_json_part:
+            return json.dumps({"data": all_components}, separators=(',', ':'))
+        else:
+            return json.dumps({"data": all_components}, separators=(',', ':'))[:-2] + ',' + raw_json_part[:-1] + ']}'
     else:
         raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
 
@@ -347,7 +362,7 @@ def get_all(storage, sessionkey, component):
     else:
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
     # Making JSON with dumps() and return it (separators needs to make JSON compact)
-    return dumps(all_components, separators=(',', ':'))
+    return json.dumps(all_components, separators=(',', ':'))
 
 
 if __name__ == '__main__':
