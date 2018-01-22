@@ -4,11 +4,61 @@ import os
 import requests
 import json
 import urllib3
+import sqlite3
 from lxml import etree
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
 from socket import gethostbyname
+
+
+def sql_op(query, fetch_all=False):
+    """
+    The function works with SQL backend.
+    :param query:
+    Data to push to db.
+    :param fetch_all:
+    Set it True to execute fetchall().
+    :return:
+    None
+    """
+
+    # Determine the path to store cache db
+    if os.name == 'posix':
+        tmp_dir = '/var/tmp/zbx-hpmsa/'
+        # Create temp dir if it's not exists
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+            # Making temp dir writable for zabbix user and group
+            os.chmod(tmp_dir, 0o770)
+        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
+            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir,
+                                                                                     user=os.getenv('USER')))
+    else:
+        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
+        tmp_dir = ''
+
+    # Cache file name
+    cache_db = tmp_dir + 'zbx-hpmsa.cache.db'
+
+    if not any(verb.lower() in query.lower() for verb in ['DROP', 'DELETE', 'TRUNCATE', 'ALTER']):
+        conn = sqlite3.connect(cache_db)
+        cursor = conn.cursor()
+        try:
+            if not fetch_all:
+                data = cursor.execute(query).fetchone()
+            else:
+                data = cursor.execute(query).fetchall()
+        except sqlite3.OperationalError as e:
+            if str(e).startswith('no such table'):
+                raise SystemExit("Cache is empty")
+            else:
+                raise SystemExit('ERROR: {}. Query: {}'.format(e, query))
+        conn.commit()
+        conn.close()
+        return data
+    else:
+        raise SystemExit('ERROR: Unacceptable SQL query: "{query}"'.format(query=query))
 
 
 def get_skey(storage, login, password, use_cache=True):
@@ -28,35 +78,24 @@ def get_skey(storage, login, password, use_cache=True):
 
     # Global variable points to use HTTPS or not
     global use_https
-
-    # Determine the path to store cache skey file
-    if os.name == 'posix' and not use_https:
-        tmp_dir = '/var/tmp/zbx-hpmsa/'
-        # Create temp dir if it's not exists
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-            # Making temp dir writable for zabbix user and group
-            os.chmod(tmp_dir, 0o770)
-        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
-            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir,
-                                                                                     user=os.getenv('USER')))
-    else:
-        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
-        tmp_dir = ''
-
-    # Cache file name
-    cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
+    msa_ip = gethostbyname(storage)
 
     # Trying to use cached session key
-    if not use_https and use_cache and os.path.exists(cache_file):
-        cache_alive = datetime.utcnow() - timedelta(minutes=15)
-        cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
-        if cache_alive < cache_file_mtime:
-            with open(cache_file, 'r') as skey_file:
-                if os.access(cache_file, 4):  # 4 - os.R_OK
-                    return skey_file.read()
-                else:
-                    raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
+    if use_cache:
+        cur_timestamp = datetime.timestamp(datetime.utcnow())
+        if not use_https:  # use http
+            cache_data = sql_op('SELECT expired,skey FROM skey_cache WHERE ip="{}" AND proto="http"'.format(storage))
+        else:  # use https
+            cache_data = sql_op('SELECT expired,skey '
+                                'FROM skey_cache '
+                                'WHERE dns_name="{name}" AND IP ="{ip}" AND proto="https"'.format(name=storage,
+                                                                                                  ip=msa_ip))
+        if cache_data is not None:
+            cache_expired, cached_skey = cache_data
+            if cur_timestamp < float(cache_expired):
+                return cached_skey
+            else:
+                return get_skey(storage, login, password, use_cache=False)
         else:
             return get_skey(storage, login, password, use_cache=False)
     else:
@@ -67,16 +106,40 @@ def get_skey(storage, login, password, use_cache=True):
         # Forming URL and trying to make GET query
         login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
 
-        # Processing XML
-        return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
+        # Unpacking data from API
+        return_code, sessionkey, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
         # 1 - success, write cache in file and return session key
         if return_code == '1':
-            if not use_https:
-                with open(cache_file, 'w') as skey_file:
-                    skey_file.write("{skey}".format(skey=response_message))
-            return response_message
-        # 2 - Authentication Unsuccessful, return 2 as <str>
+            expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=1))
+            if not use_https:  # http
+                if sql_op('SELECT ip FROM skey_cache WHERE ip = "{ip}" AND proto="http"'.format(ip=storage)) is None:
+                    # Inserting new cache
+                    sql_op('INSERT INTO skey_cache (dns_name, ip, proto, expired, skey)'
+                           'VALUES("{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage,
+                                                                                        ip=storage,
+                                                                                        time=expired_time,
+                                                                                        skey=sessionkey))
+                else:
+                    # Updating existing cache
+                    sql_op('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
+                           'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey, expired=expired_time, ip=storage))
+            else:  # https
+                if sql_op('SELECT dns_name, ip FROM skey_cache '
+                          'WHERE dns_name="{dns_name}" AND ip="{ip}" AND proto="https"'.format(dns_name=storage,
+                                                                                               ip=msa_ip)) is None:
+                    sql_op('INSERT INTO skey_cache (dns_name, ip, proto, expired, skey) '
+                           'VALUES ("{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
+                                                                                              ip=msa_ip,
+                                                                                              expired=expired_time,
+                                                                                              skey=sessionkey))
+                else:
+                    sql_op('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
+                           'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
+                                                                                            expired=expired_time,
+                                                                                            name=storage, ip=msa_ip))
+            return sessionkey
+        # 2 - Authentication Unsuccessful, return "2"
         elif return_code == '2':
             return return_code
 
@@ -133,7 +196,7 @@ def query_xmlapi(url, sessionkey):
         raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
 
 
-def get_health(storage, sessionkey, component, item):
+def get_health(storage, component, item, sessionkey):
     """
     The function gets single item of MSA component. E.g. - status of one disk. It may be useful for Zabbix < 3.4.
     :param storage:
@@ -188,7 +251,7 @@ def get_health(storage, sessionkey, component, item):
     return health
 
 
-def make_discovery(storage, sessionkey, component):
+def make_discovery(storage, component, sessionkey):
     """
     :param storage:
     String with storage name in DNS or it's IP address.
@@ -260,7 +323,7 @@ def make_discovery(storage, sessionkey, component):
         raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
 
 
-def get_all(storage, sessionkey, component):
+def get_all(storage, component, sessionkey):
     """
     :param storage:
     String with storage name in DNS or it's IP address.
@@ -373,7 +436,7 @@ def get_all(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.3'
+    VERSION = '0.3.4'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
@@ -390,7 +453,27 @@ if __name__ == '__main__':
     parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
                         metavar='[direct|verify]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
+    parser.add_argument('--showcache', action='store_true', help='Display cache data')
     args = parser.parse_args()
+
+    # Create cache table if it not exists
+    sql_op('CREATE TABLE IF NOT EXISTS skey_cache ('
+           'dns_name TEXT NOT NULL, '
+           'ip TEXT NOT NULL, '
+           'proto TEXT NOT NULL, '
+           'expired TEXT NOT NULL, '
+           'skey TEXT NOT NULL DEFAULT 0, '
+           'PRIMARY KEY (dns_name, ip))')
+
+    # Display cache data and exit
+    if args.showcache:
+        print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('host', 'ip', 'proto', 'expired', 'sessionkey'))
+        print("{:-^30} {:-^15} {:-^7} {:-^19} {:-^32}".format('-', '-', '-', '-', '-'))
+        for cache in sql_op('SELECT * FROM skey_cache', fetch_all=True):
+            name, ip, proto, expired, skey = cache
+            print("{:30} {:15} {:^7} {:19} {:32}".format(
+                name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), skey))
+        exit(0)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
@@ -405,20 +488,14 @@ if __name__ == '__main__':
     if args.discovery and args.get:
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
-    # Getting session key
-    skey = get_skey(storage=msa_connect, login=args.user, password=args.password)
-
-    if skey != '2':
-        # If gets '--discovery' argument, make discovery
-        if args.discovery:
-            print(make_discovery(msa_connect, skey, args.component))
-        # If gets '--get' argument, getting component's health
-        elif args.get and args.get != 'all':
-            print(get_health(msa_connect, skey, args.component, args.get))
-        # Making bulk request for all possible component statuses
-        elif args.get == 'all':
-            print(get_all(msa_connect, skey, args.component))
-        else:
-            raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
+    # If gets '--discovery' argument, make discovery
+    if args.discovery:
+        print(make_discovery(msa_connect, args.component, get_skey(msa_connect, args.user, args.password)))
+    # If gets '--get' argument, getting component's health
+    elif args.get and args.get != 'all':
+        print(get_health(msa_connect, args.component, args.get, get_skey(msa_connect, args.user, args.password)))
+    # Making bulk request for all possible component statuses
+    elif args.get == 'all':
+        print(get_all(msa_connect, args.component, get_skey(msa_connect, args.user, args.password)))
     else:
-        raise SystemExit('ERROR: Login or password is incorrect.')
+        raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
