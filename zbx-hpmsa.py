@@ -2,11 +2,12 @@
 
 import os
 import requests
+import json
+import urllib3
 from lxml import etree
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
-from json import dumps
 from socket import gethostbyname
 
 
@@ -30,7 +31,7 @@ def get_skey(storage, login, password, use_cache=True):
 
     # Determine the path to store cache skey file
     if os.name == 'posix' and not use_https:
-        tmp_dir = '/tmp/zbx-hpmsa-dev/'
+        tmp_dir = '/var/tmp/zbx-hpmsa-dev/'
         # Create temp dir if it's not exists
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
@@ -96,6 +97,7 @@ def query_xmlapi(url, sessionkey):
 
     # Global variable points to use HTTPS or not
     global use_https
+    global verify_ssl
 
     # Set file where we can find root CA for our storages
     ca_file = '/etc/ssl/certs/ca-bundle.crt'
@@ -107,7 +109,11 @@ def query_xmlapi(url, sessionkey):
             response = requests.get(url, headers={'sessionKey': sessionkey})
         else:  # https
             url = 'https://' + url
-            response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+            if verify_ssl:
+                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+            else:
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except requests.exceptions.ConnectionError:
@@ -198,43 +204,58 @@ def make_discovery(storage, sessionkey, component):
     show_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Making request to API
-    resp_return_code, resp_description, resp_xml = query_xmlapi(show_url, sessionkey)
+    resp_return_code, resp_description, xml = query_xmlapi(show_url, sessionkey)
     if resp_return_code != '0':
         raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Eject XML from response
     if component is not None:
         all_components = []
+        raw_json_part = ''
         if component.lower() == 'vdisks':
-            for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
+            for vdisk in xml.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.find("./PROPERTY[@name='name']").text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component.lower() == 'disks':
-            for disk in resp_xml.findall("./OBJECT[@name='drive']"):
+            for disk in xml.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.find("./PROPERTY[@name='location']").text
                 disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
         elif component.lower() == 'controllers':
-            for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
+            for ctrl in xml.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
                 ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
                 ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
+                all_ports = [port.find("./PROPERTY[@name='port']").text
+                             for port in ctrl.findall("./OBJECT[@name='ports']")]
+                for port in all_ports:
+                    raw_json_part += '{{"{{#PORTNAME}}":"{}"}},'.format(port)
+                # Forming final dict
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
                 all_components.append(ctrl_dict)
         elif component.lower() == 'enclosures':
-            for encl in resp_xml.findall(".OBJECT[@name='enclosures']"):
+            for encl in xml.findall(".OBJECT[@name='enclosures']"):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+                all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
+                          for PS in encl.findall("./OBJECT[@name='power-supplies']")]
+                for ps in all_ps:
+                    raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
+                # Forming final dict
                 encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
                              "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
                 all_components.append(encl_dict)
-        to_json = {"data": all_components}
-        return dumps(to_json, separators=(',', ':'))
+
+        # Dumps JSON and return it
+        if not raw_json_part:
+            return json.dumps({"data": all_components}, separators=(',', ':'))
+        else:
+            return json.dumps({"data": all_components}, separators=(',', ':'))[:-2] + ',' + raw_json_part[:-1] + ']}'
     else:
         raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
 
@@ -265,12 +286,12 @@ def get_all(storage, sessionkey, component):
     # Processing XML if response code 0
     all_components = {}
     if component == 'disks':
-        for PROP in xml.findall("OBJECT[@name='drive']"):
+        for PROP in xml.findall("./OBJECT[@name='drive']"):
             # Getting data from XML
-            disk_location = PROP.find("PROPERTY[@name='location']").text
-            disk_health = PROP.find("PROPERTY[@name='health']").text
-            disk_temp = PROP.find("PROPERTY[@name='temperature-numeric']").text
-            disk_work_hours = PROP.find("PROPERTY[@name='power-on-hours']").text
+            disk_location = PROP.find("./PROPERTY[@name='location']").text
+            disk_health = PROP.find("./PROPERTY[@name='health']").text
+            disk_temp = PROP.find("./PROPERTY[@name='temperature-numeric']").text
+            disk_work_hours = PROP.find("./PROPERTY[@name='power-on-hours']").text
             # Making dict with one disk data
             disk_info = {
                     "health": disk_health,
@@ -280,10 +301,10 @@ def get_all(storage, sessionkey, component):
             # Adding one disk to common dict
             all_components[disk_location] = disk_info
     elif component == 'vdisks':
-        for PROP in xml.findall("OBJECT[@name='virtual-disk']"):
+        for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
             # Getting data from XML
-            vdisk_name = PROP.find("PROPERTY[@name='name']").text
-            vdisk_health = PROP.find("PROPERTY[@name='health']").text
+            vdisk_name = PROP.find("./PROPERTY[@name='name']").text
+            vdisk_health = PROP.find("./PROPERTY[@name='health']").text
 
             # Making dict with one vdisk data
             vdisk_info = {
@@ -292,18 +313,18 @@ def get_all(storage, sessionkey, component):
             # Adding one vdisk to common dict
             all_components[vdisk_name] = vdisk_info
     elif component == 'controllers':
-        for PROP in xml.findall("OBJECT[@name='controllers']"):
+        for PROP in xml.findall("./OBJECT[@name='controllers']"):
             # Getting data from XML
-            ctrl_id = PROP.find("PROPERTY[@name='controller-id']").text
-            ctrl_health = PROP.find("PROPERTY[@name='health']").text
-            cf_health = PROP.find("OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
+            ctrl_id = PROP.find("./PROPERTY[@name='controller-id']").text
+            ctrl_health = PROP.find("./PROPERTY[@name='health']").text
+            cf_health = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
             # Getting info for all FC ports
             ports_info = {}
-            for FC_PORT in PROP.findall("OBJECT[@name='ports']"):
-                port_name = FC_PORT.find("PROPERTY[@name='port']").text
-                port_health = FC_PORT.find("PROPERTY[@name='health']").text
-                port_status = FC_PORT.find("PROPERTY[@name='status']").text
-                sfp_status = FC_PORT.find("OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
+            for FC_PORT in PROP.findall("./OBJECT[@name='ports']"):
+                port_name = FC_PORT.find("./PROPERTY[@name='port']").text
+                port_health = FC_PORT.find("./PROPERTY[@name='health']").text
+                port_status = FC_PORT.find("./PROPERTY[@name='status']").text
+                sfp_status = FC_PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
                 # Puts all info into dict
                 ports_info[port_name] = {
                     "health": port_health,
@@ -317,19 +338,46 @@ def get_all(storage, sessionkey, component):
                     "ports": ports_info
                 }
                 all_components[ctrl_id] = ctrl_info
+    elif component == 'enclosures':
+        for PROP in xml.findall("./OBJECT[@name='enclosures']"):
+            encl_id = PROP.find("./PROPERTY[@name='enclosure-id']").text
+            encl_health = PROP.find("./PROPERTY[@name='health']").text
+            encl_status = PROP.find("./PROPERTY[@name='status']").text
+            # Power supply info
+            ps_info = {}
+            for PS in PROP.findall("./OBJECT[@name='power-supplies']"):
+                ps_id = PS.find("./PROPERTY[@name='durable-id']").text
+                ps_name = PS.find("./PROPERTY[@name='name']").text
+                ps_health = PS.find("./PROPERTY[@name='health']").text
+                ps_status = PS.find("./PROPERTY[@name='status']").text
+                ps_temp = PS.find("./PROPERTY[@name='dctemp']").text
+                # Puts all info into dict
+                ps_info[ps_id] = {
+                    "name": ps_name,
+                    "health": ps_health,
+                    "status": ps_status,
+                    "temperature": ps_temp
+                }
+                # Making final dict with info of the one controller
+                encl_info = {
+                    "health": encl_health,
+                    "status": encl_status,
+                    "power_supplies": ps_info
+                }
+                all_components[encl_id] = encl_info
     else:
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
     # Making JSON with dumps() and return it (separators needs to make JSON compact)
-    return dumps(all_components, separators=(',', ':'))
+    return json.dumps(all_components, separators=(',', ':'))
 
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.2'
+    VERSION = '0.3.3'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
-    parser.add_argument('-d', '--discovery', action='store_true')
+    parser.add_argument('-d', '--discovery', action='store_true', help='Making discovery')
     parser.add_argument('-g', '--get', type=str, help='ID of MSA part which status we want to get',
                         metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
@@ -339,7 +387,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
-    parser.add_argument('--https', action='store_true', help='Use https instead http.')
+    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
+                        metavar='[direct|verify]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
@@ -348,12 +397,9 @@ if __name__ == '__main__':
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Set msa_connect - IP or DNS name and determine to use https or not
-    if args.https:
-        use_https = True
-        msa_connect = args.msa
-    else:
-        use_https = False
-        msa_connect = gethostbyname(args.msa)
+    use_https = args.https in ['direct', 'verify']
+    verify_ssl = args.https == 'verify'
+    msa_connect = args.msa if use_https else gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
