@@ -31,7 +31,8 @@ Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn
  - [x] Enclosures
 
 ## TODO  
-- [ ] Bulk requests for enclosures
+- [ ] Move cache to SQLite database;
+- [ ] Add correct processing of round-robin DNS records
 
 ## Supported arguments  
 **-m|--msa**  
@@ -48,7 +49,7 @@ Sets component to request.
 Get component health status.  
 **-v|--version**  
 Prints script version and exit.  
-**--https**  
+**--https [verify|direct]**  
 Using HTTPS instead HTTP.
 
 
