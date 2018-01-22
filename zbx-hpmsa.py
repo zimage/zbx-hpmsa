@@ -31,7 +31,7 @@ def get_skey(storage, login, password, use_cache=True):
 
     # Determine the path to store cache skey file
     if os.name == 'posix' and not use_https:
-        tmp_dir = '/tmp/zbx-hpmsa-dev/'
+        tmp_dir = '/var/tmp/zbx-hpmsa-dev/'
         # Create temp dir if it's not exists
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
@@ -373,7 +373,7 @@ def get_all(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.4'
+    VERSION = '0.3.3'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
