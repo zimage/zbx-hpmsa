@@ -4,7 +4,7 @@ Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/h
 Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
 
 zbx-hpmsa provides possibility to make Low Level Discovery of HPE MSA storage components via it's XML API. Also it can get health status of discovered component.  
-Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn't check it with earlier versions, sorry).  
+Program wrote with Python 3.6, but works with Python 3.4.4 from CentOS (I didn't check it with earlier versions, sorry).  
 
 **Latest stable version:** 0.3.3
 
@@ -16,7 +16,7 @@ Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn
 **Common:**
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [x] Session key cache (MSA login cache)
- - [x] HTTPS support (with limitations, look relevant section in Wiki)
+ - [x] HTTPS support
 
 **Low Level Discovery:**
  - [x] physical disks 
@@ -31,8 +31,8 @@ Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn
  - [x] Enclosures
 
 ## TODO  
-- [ ] Move cache to SQLite database;
-- [ ] Add correct processing of round-robin DNS records
+- [ ] Move cache to SQLite database
+- [ ] Add correct processing of round-robin DNS records for HTTPS
 
 ## Supported arguments  
 **-m|--msa**  
@@ -83,9 +83,10 @@ has default user with default password - **'monitor'@'!monitor'**, but if it isn
 ```  
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
-**Tested with**:  
+## Tested with:  
 HP MSA 2040
 
-**Known Issues**:
+## Known Issues:  
 - Sometimes appears the error "The user is not recognized on this system" though username and password are correct.
-  - Fixed in 0.2.5.2 and higher.
+  - Fixed in 0.2.5.2 and higher.  
+- Using '--https' with dns round-robin doesn't works correctly. It may give you the "ERROR: -10027", that means the user in not recongnized on the system. It happens because of session key was given from one MSA controller, but the script tries to establish connections the other one. I haven't solution right now, so just don't using it so. =)
