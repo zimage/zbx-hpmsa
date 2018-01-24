@@ -5,7 +5,7 @@ import requests
 import json
 import urllib3
 import sqlite3
-from lxml import etree
+from xml.etree import ElementTree as eTree
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
@@ -184,7 +184,7 @@ def query_xmlapi(url, sessionkey):
 
     # Reading data from server XML response
     try:
-        response_xml = etree.fromstring(response.content)
+        response_xml = eTree.fromstring(response.content)
 
         # Parse result XML to get return code and description
         return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
