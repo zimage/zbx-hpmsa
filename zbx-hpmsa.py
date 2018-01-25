@@ -16,7 +16,7 @@ def sql_op(query, fetch_all=False):
     """
     The function works with SQL backend.
     :param query:
-    Data to push to db.
+    SQL query to execute.
     :param fetch_all:
     Set it True to execute fetchall().
     :return:
@@ -292,10 +292,16 @@ def make_discovery(storage, component, sessionkey):
                 ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
                 ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
                 ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
-                all_ports = [port.find("./PROPERTY[@name='port']").text
-                             for port in ctrl.findall("./OBJECT[@name='ports']")]
-                for port in all_ports:
-                    raw_json_part += '{{"{{#PORTNAME}}":"{}"}},'.format(port)
+                # Find all possible ports
+                # all_ports = [port.find("./PROPERTY[@name='port']").text
+                #             for port in ctrl.findall("./OBJECT[@name='ports']")]
+                all_ports = {}
+                for port in ctrl.findall("./OBJECT[@name='ports']"):
+                    port_name = port.find("./PROPERTY[@name='port']").text
+                    sfp_present = port.find(".//PROPERTY[@name='sfp-present-numeric']").text
+                    all_ports[port_name] = sfp_present
+                for port, status in all_ports.items():
+                    raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
                 # Forming final dict
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
@@ -463,11 +469,11 @@ if __name__ == '__main__':
            'proto TEXT NOT NULL, '
            'expired TEXT NOT NULL, '
            'skey TEXT NOT NULL DEFAULT 0, '
-           'PRIMARY KEY (dns_name, ip))')
+           'PRIMARY KEY (dns_name, ip, proto))')
 
     # Display cache data and exit
     if args.showcache:
-        print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('host', 'ip', 'proto', 'expired', 'sessionkey'))
+        print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('hostname', 'ip', 'proto', 'expired', 'sessionkey'))
         print("{:-^30} {:-^15} {:-^7} {:-^19} {:-^32}".format('-', '-', '-', '-', '-'))
         for cache in sql_op('SELECT * FROM skey_cache', fetch_all=True):
             name, ip, proto, expired, skey = cache
@@ -482,7 +488,7 @@ if __name__ == '__main__':
     # Set msa_connect - IP or DNS name and determine to use https or not
     use_https = args.https in ['direct', 'verify']
     verify_ssl = args.https == 'verify'
-    msa_connect = args.msa if use_https else gethostbyname(args.msa)
+    msa_connect = args.msa if verify_ssl else gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
