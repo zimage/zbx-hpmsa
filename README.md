@@ -4,19 +4,20 @@ Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/h
 Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
 
 zbx-hpmsa provides possibility to make Low Level Discovery of HPE MSA storage components via it's XML API. Also it can get health status of discovered component.  
-Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn't check it with earlier versions, sorry).  
+Program wrote with Python 3.6, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
 
-**Latest stable version:** 0.3.3
+**Latest stable version:** 0.3.4
 
 ## Dependencies
  - requests
- - lxml (experimental, may be replaced with 'xml' from Python stdlib)
+ - sqlite3
 
 ## Feautres  
 **Common:**
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [x] Session key cache (MSA login cache)
  - [x] HTTPS support (with limitations, look relevant section in Wiki)
+ - [x] Login cache (SQLite3)
 
 **Low Level Discovery:**
  - [x] physical disks 
@@ -31,7 +32,6 @@ Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn
  - [x] Enclosures
 
 ## TODO  
-- [ ] Move cache to SQLite database;
 - [ ] Add correct processing of round-robin DNS records
 
 ## Supported arguments  
@@ -45,15 +45,18 @@ Sets password for MSA user
 Enables discovery mode.  
 **-c|--component**  
 Sets component to request.  
-**-g|--get**  
+**-g|--get|--health**  
 Get component health status.  
 **-v|--version**  
-Prints script version and exit.  
+Print script version and exit.  
 **--https [verify|direct]**  
 Using HTTPS instead HTTP.
+**--showcache**  
+Print cache content and exit.
 
 
 ## Usage
+You can find more examples on Wiki page, but I placed some cases here too.  
 - LLD of enclosures, controllers, virtual disks and physical disks:
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
@@ -88,4 +91,5 @@ HP MSA 2040
 
 **Known Issues**:
 - Sometimes appears the error "The user is not recognized on this system" though username and password are correct.
-  - Fixed in 0.2.5.2 and higher.
+  - Fixed in 0.2.5.2 and higher.  
+- Using '--https verify' with dns round-robin doesn't works correctly. It may give you the "ERROR: -10027", that means the user in not recongnized on the system. It happens because of session key was given from one MSA controller, but the script tries to establish connections the other one. The option '--https direct' will works fine, so you can try to use it instead. I haven't full solution right now, so just don't using it so. =)
