@@ -50,7 +50,7 @@ Get component health status.
 **-v|--version**  
 Print script version and exit.  
 **--https [verify|direct]**  
-Using HTTPS instead HTTP.
+Using HTTPS instead HTTP.  
 **--showcache**  
 Print cache content and exit.
 
