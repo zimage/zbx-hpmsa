@@ -26,8 +26,11 @@ def hash_pwd(cred, isfile=False):
     if isfile:
         if os.path.exists(cred):
             with open(cred, 'r') as login_file:
-                login_data = login_file.readline().replace('\n', '')
-                hashed = md5(login_data.encode()).hexdigest()
+                login_data = login_file.readline().replace('\n', '').strip()
+                if login_data.find('_') != -1:
+                    hashed = md5(login_data.encode()).hexdigest()
+                else:
+                    hashed = login_data
         else:
             raise SystemExit("ERROR: File password doesn't exists: {}".format(cred))
     else:
