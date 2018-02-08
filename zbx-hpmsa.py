@@ -293,15 +293,13 @@ def make_discovery(storage, component, sessionkey):
                 ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
                 ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
                 # Find all possible ports
-                # all_ports = [port.find("./PROPERTY[@name='port']").text
-                #             for port in ctrl.findall("./OBJECT[@name='ports']")]
-                # fc_ports = {}
-                # for port in ctrl.findall("./OBJECT[@name='ports']"):
-                #     port_name = port.find("./PROPERTY[@name='port']").text
-                #     sfp_present = port.find(".//PROPERTY[@name='sfp-present-numeric']").text
-                #     fc_ports[port_name] = sfp_present
-                # for port, status in fc_ports.items():
-                #     raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
+                fc_ports = {}
+                for port in ctrl.findall("./OBJECT[@name='ports']"):
+                    port_name = port.find("./PROPERTY[@name='port']").text
+                    sfp_present = port.find(".//PROPERTY[@name='sfp-present-numeric']").text
+                    fc_ports[port_name] = sfp_present
+                for port, status in fc_ports.items():
+                    raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
                 # Forming final dict
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
@@ -311,10 +309,10 @@ def make_discovery(storage, component, sessionkey):
             for encl in xml.findall(".OBJECT[@name='enclosures']"):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
-                # all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
-                #           for PS in encl.findall("./OBJECT[@name='power-supplies']")]
-                # for ps in all_ps:
-                #     raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
+                all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
+                          for PS in encl.findall("./OBJECT[@name='power-supplies']")]
+                for ps in all_ps:
+                    raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
                 # Forming final dict
                 encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
                              "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
