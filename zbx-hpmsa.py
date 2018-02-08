@@ -12,6 +12,29 @@ from argparse import ArgumentParser
 from socket import gethostbyname
 
 
+def hash_pwd(cred, isfile=False):
+    """
+    The function makes md5 hash of login string.
+    :param cred:
+    str() Login string in 'user_password' format of path to file.
+    :param isfile:
+    bool Is string the file path.
+    :return:
+    str() md5 hash
+    """
+
+    if isfile:
+        if os.path.exists(cred):
+            with open(cred, 'r') as login_file:
+                login_data = login_file.readline().replace('\n', '')
+                hashed = md5(login_data.encode()).hexdigest()
+        else:
+            raise SystemExit("ERROR: File password doesn't exists: {}".format(cred))
+    else:
+        hashed = md5(cred.encode()).hexdigest()
+    return hashed
+
+
 def sql_op(query, fetch_all=False):
     """
     The function works with SQL backend.
@@ -61,15 +84,13 @@ def sql_op(query, fetch_all=False):
         raise SystemExit('ERROR: Unacceptable SQL query: "{query}"'.format(query=query))
 
 
-def get_skey(storage, login, password, use_cache=True):
+def get_skey(storage, hashed_login, use_cache=True):
     """
     Get's session key from HP MSA API.
     :param storage:
     String with storage IP address.
-    :param login:
-    String with MSA username.
-    :param password:
-    String with MSA password.
+    :param hashed_login:
+    str() Hashed with md5 login data.
     :param use_cache:
     The function will try to save session key to disk.
     :return:
@@ -77,7 +98,6 @@ def get_skey(storage, login, password, use_cache=True):
     """
 
     # Global variable points to use HTTPS or not
-    global use_https
     msa_ip = gethostbyname(storage)
 
     # Trying to use cached session key
@@ -88,23 +108,18 @@ def get_skey(storage, login, password, use_cache=True):
         else:  # use https
             cache_data = sql_op('SELECT expired,skey '
                                 'FROM skey_cache '
-                                'WHERE dns_name="{name}" AND IP ="{ip}" AND proto="https"'.format(name=storage,
-                                                                                                  ip=msa_ip))
+                                'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip))
         if cache_data is not None:
             cache_expired, cached_skey = cache_data
             if cur_timestamp < float(cache_expired):
                 return cached_skey
             else:
-                return get_skey(storage, login, password, use_cache=False)
+                return get_skey(storage, hashed_login, use_cache=False)
         else:
-            return get_skey(storage, login, password, use_cache=False)
+            return get_skey(storage, hashed_login, use_cache=False)
     else:
-        # Combine login and password to 'login_password' format.
-        login_data = '_'.join([login, password])
-        login_hash = md5(login_data.encode()).hexdigest()
-
         # Forming URL and trying to make GET query
-        login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
+        login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=hashed_login)
 
         # Unpacking data from API
         return_code, sessionkey, xml_data = query_xmlapi(url=login_url, sessionkey=None)
@@ -157,10 +172,6 @@ def query_xmlapi(url, sessionkey):
 
     # Helps with debug info
     cur_fname = query_xmlapi.__name__
-
-    # Global variable points to use HTTPS or not
-    global use_https
-    global verify_ssl
 
     # Set file where we can find root CA for our storages
     ca_file = '/etc/ssl/certs/ca-bundle.crt'
@@ -440,7 +451,7 @@ def get_all(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.3.4'
+    VERSION = '0.4'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
@@ -449,6 +460,7 @@ if __name__ == '__main__':
                         metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
+    parser.add_argument('-f', '--loginfile', type=str, help='Path to file contains login and password')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
                         metavar='[IP|DNSNAME]')
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
@@ -492,14 +504,24 @@ if __name__ == '__main__':
     if args.discovery and args.get:
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
+    # Make login hash string
+    if args.loginfile:
+        cred_hash = hash_pwd(args.loginfile, isfile=True)
+    else:
+        login_string = '_'.join([args.user, args.password])
+        cred_hash = hash_pwd(login_string)
+
+    # Getting sessionkey
+    skey = get_skey(msa_connect, cred_hash)
+
     # If gets '--discovery' argument, make discovery
     if args.discovery:
-        print(make_discovery(msa_connect, args.component, get_skey(msa_connect, args.user, args.password)))
+        print(make_discovery(msa_connect, args.component, skey))
     # If gets '--get' argument, getting component's health
     elif args.get and args.get != 'all':
-        print(get_health(msa_connect, args.component, args.get, get_skey(msa_connect, args.user, args.password)))
+        print(get_health(msa_connect, args.component, args.get, skey))
     # Making bulk request for all possible component statuses
     elif args.get == 'all':
-        print(get_all(msa_connect, args.component, get_skey(msa_connect, args.user, args.password)))
+        print(get_all(msa_connect, args.component, skey))
     else:
         raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
