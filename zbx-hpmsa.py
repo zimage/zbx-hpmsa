@@ -111,7 +111,7 @@ def get_skey(storage, login, password, use_cache=True):
 
         # 1 - success, write cache in file and return session key
         if return_code == '1':
-            expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=1))
+            expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=15))
             if not use_https:  # http
                 if sql_op('SELECT ip FROM skey_cache WHERE ip = "{ip}" AND proto="http"'.format(ip=storage)) is None:
                     # Inserting new cache
@@ -295,13 +295,13 @@ def make_discovery(storage, component, sessionkey):
                 # Find all possible ports
                 # all_ports = [port.find("./PROPERTY[@name='port']").text
                 #             for port in ctrl.findall("./OBJECT[@name='ports']")]
-                all_ports = {}
-                for port in ctrl.findall("./OBJECT[@name='ports']"):
-                    port_name = port.find("./PROPERTY[@name='port']").text
-                    sfp_present = port.find(".//PROPERTY[@name='sfp-present-numeric']").text
-                    all_ports[port_name] = sfp_present
-                for port, status in all_ports.items():
-                    raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
+                # fc_ports = {}
+                # for port in ctrl.findall("./OBJECT[@name='ports']"):
+                #     port_name = port.find("./PROPERTY[@name='port']").text
+                #     sfp_present = port.find(".//PROPERTY[@name='sfp-present-numeric']").text
+                #     fc_ports[port_name] = sfp_present
+                # for port, status in fc_ports.items():
+                #     raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
                 # Forming final dict
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
@@ -311,10 +311,10 @@ def make_discovery(storage, component, sessionkey):
             for encl in xml.findall(".OBJECT[@name='enclosures']"):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
-                all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
-                          for PS in encl.findall("./OBJECT[@name='power-supplies']")]
-                for ps in all_ps:
-                    raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
+                # all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
+                #           for PS in encl.findall("./OBJECT[@name='power-supplies']")]
+                # for ps in all_ps:
+                #     raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
                 # Forming final dict
                 encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
                              "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
@@ -447,7 +447,7 @@ if __name__ == '__main__':
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true', help='Making discovery')
-    parser.add_argument('-g', '--get', type=str, help='ID of MSA part which status we want to get',
+    parser.add_argument('-g', '--get', '--health', type=str, help='ID of MSA part which status we want to get',
                         metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
