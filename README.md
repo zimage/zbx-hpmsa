@@ -40,9 +40,9 @@ HPE MSA DNS name or IP address.
 **-u|--user**  
 Sets MSA username  
 **-p|--password**  
-Sets password for MSA user
-**-f|--loginfile**
-Path to file with login and password data
+Sets password for MSA user  
+**-f|--loginfile**  
+Path to file with login and password data  
 **-d|--discovery**  
 Enables discovery mode.  
 **-c|--component**  
@@ -95,5 +95,4 @@ HP MSA P2000 G3, HP MSA 2040, HP MSA 2050
 - Sometimes appears the error "The user is not recognized on this system" though username and password are correct.
   - Fixed in 0.2.5.2 and higher.  
 - Using '--https verify' with dns round-robin doesn't works correctly. It may give you the "ERROR: -10027", that means the user in not recongnized on the system. It happens because of session key was given from one MSA controller, but the script tries to establish connections the other one. The option '--https direct' will works fine, so you can try to use it instead. I haven't full solution right now, so just don't using it so. =)
-- LLD rule of enclosures and controllers can show the next error: __"ERROR: Cannot create item: item with same key 'item.key' already exists."__
-It's because of JSON file forming incorrect, but all items creating successfully. LLD code was corrected in v0.3.3.1 and v0.4.
+- LLD rule of enclosures and controllers can show the next error: __"ERROR: Cannot create item: item with same key 'item.key' already exists."__ It's because JSON file forming incorrect, but all items creating successfully. LLD code was corrected in v0.3.3.1 and v0.4.
