@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from socket import gethostbyname
 
 
-def hash_pwd(cred, isfile=False):
+def make_pwd_hash(cred, isfile=False):
     """
     The function makes md5 hash of login string.
     :param cred:
@@ -509,10 +509,9 @@ if __name__ == '__main__':
 
     # Make login hash string
     if args.loginfile:
-        cred_hash = hash_pwd(args.loginfile, isfile=True)
+        cred_hash = make_pwd_hash(args.loginfile, isfile=True)
     else:
-        login_string = '_'.join([args.user, args.password])
-        cred_hash = hash_pwd(login_string)
+        cred_hash = make_pwd_hash('_'.join([args.user, args.password]))
 
     # Getting sessionkey
     skey = get_skey(msa_connect, cred_hash)
