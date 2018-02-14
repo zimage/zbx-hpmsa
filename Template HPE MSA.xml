@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>3.4</version>
-    <date>2017-12-14T07:53:13Z</date>
+    <date>2018-02-14T07:40:29Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -9,9 +9,9 @@
     </groups>
     <templates>
         <template>
-            <template>RGr Template HP MSA 2040</template>
-            <name>RGr Template HP MSA 2040</name>
-            <description>Discover all virtual and physical disks on HP MSA 2040 by using XML API.</description>
+            <template>Template HPE MSA</template>
+            <name>Template HPE MSA</name>
+            <description>Discover all virtual and physical disks on HPE MSA by using XML API.</description>
             <groups>
                 <group>
                     <name>Templates</name>
@@ -39,7 +39,7 @@
                     <snmp_community/>
                     <snmp_oid/>
                     <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;]</key>
-                    <delay>3h</delay>
+                    <delay>1h</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -194,7 +194,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HPE MSA:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CTRLID} health status is not OK</name>
@@ -215,7 +215,7 @@
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{RGr Template HP MSA 2040:icmpping[{#CTRLIP},2].count(#5,1,ne)}&gt;3</expression>
+                            <expression>{Template HPE MSA:icmpping[{#CTRLIP},2].count(#5,1,ne)}&gt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CTRLID} ping failed</name>
@@ -236,7 +236,7 @@
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{RGr Template HP MSA 2040:net.tcp.service[http,{#CTRLIP},80].count(#5,1,ne)}&gt;3</expression>
+                            <expression>{Template HPE MSA:net.tcp.service[http,{#CTRLIP},80].count(#5,1,ne)}&gt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Web interface on controller {#CTRLID} ({#CTRLIP}) is down</name>
@@ -251,7 +251,7 @@
                             <dependencies>
                                 <dependency>
                                     <name>Controller {#CTRLID} ping failed</name>
-                                    <expression>{RGr Template HP MSA 2040:icmpping[{#CTRLIP},2].count(#5,1,ne)}&gt;3</expression>
+                                    <expression>{Template HPE MSA:icmpping[{#CTRLIP},2].count(#5,1,ne)}&gt;3</expression>
                                     <recovery_expression/>
                                 </dependency>
                             </dependencies>
@@ -273,7 +273,7 @@
                     <snmp_community/>
                     <snmp_oid/>
                     <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;]</key>
-                    <delay>3h</delay>
+                    <delay>1h</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -344,7 +344,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HPE MSA:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Physical Disk in slot {#DISKLOCATION} is not OK</name>
@@ -375,7 +375,7 @@
                     <snmp_community/>
                     <snmp_oid/>
                     <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;]</key>
-                    <delay>3h</delay>
+                    <delay>1h</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -446,7 +446,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HPE MSA:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Enclosure {#ENCLOSUREID} health status is not OK</name>
@@ -477,7 +477,7 @@
                     <snmp_community/>
                     <snmp_oid/>
                     <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;]</key>
-                    <delay>3h</delay>
+                    <delay>1h</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -548,7 +548,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HPE MSA:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Virtual Disk {#VDISKNAME} Status is not OK</name>
