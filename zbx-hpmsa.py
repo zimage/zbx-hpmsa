@@ -16,11 +16,11 @@ def make_pwd_hash(cred, isfile=False):
     """
     The function makes md5 hash of login string.
     :param cred:
-    str() Login string in 'user_password' format of path to file.
+    str: Login string in 'user_password' format or path to the file with credentials.
     :param isfile:
-    bool Is string the file path.
+    bool: Is string the file path.
     :return:
-    str() md5 hash
+    str: md5 hash
     """
 
     if isfile:
@@ -38,37 +38,40 @@ def make_pwd_hash(cred, isfile=False):
     return hashed
 
 
+def prepare_tmp():
+    """
+    The function check access rights and existence of temporary dir.
+    :return:
+    str() Temporary disk path.
+    """
+
+    if os.name == 'posix':
+        tmp_dir = '/var/tmp/zbx-hpmsa/'
+        run_user = os.getenv('USER')
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+            os.chmod(tmp_dir, 0o770)
+        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
+            raise SystemExit("ERROR: '{}' not writable for user '{}'.".format(tmp_dir, run_user))
+    else:
+        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
+        tmp_dir = ''
+    return tmp_dir
+
+
 def sql_op(query, fetch_all=False):
     """
     The function works with SQL backend.
     :param query:
-    SQL query to execute.
+    str: SQL query to execute.
     :param fetch_all:
-    Set it True to execute fetchall().
+    bool: Set it True to execute fetchall().
     :return:
     None
     """
 
-    # Determine the path to store cache db
-    if os.name == 'posix':
-        tmp_dir = '/var/tmp/zbx-hpmsa/'
-        # Create temp dir if it's not exists
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-            # Making temp dir writable for zabbix user and group
-            os.chmod(tmp_dir, 0o770)
-        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
-            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir,
-                                                                                     user=os.getenv('USER')))
-    else:
-        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
-        tmp_dir = ''
-
-    # Cache file name
-    cache_db = tmp_dir + 'zbx-hpmsa.cache.db'
-
     if not any(verb.lower() in query.lower() for verb in ['DROP', 'DELETE', 'TRUNCATE', 'ALTER']):
-        conn = sqlite3.connect(cache_db)
+        conn = sqlite3.connect(CACHE_DB)
         cursor = conn.cursor()
         try:
             if not fetch_all:
@@ -91,24 +94,23 @@ def get_skey(storage, hashed_login, use_cache=True):
     """
     Get's session key from HP MSA API.
     :param storage:
-    String with storage IP address.
+    str: Storage IP address or DNS name.
     :param hashed_login:
-    str() Hashed with md5 login data.
+    str: Hashed with md5 login data.
     :param use_cache:
-    The function will try to save session key to disk.
+    bool: The function will try to save session key to disk.
     :return:
-    Session key as <str> or error code as <str>
+    str: Session key or error code.
     """
 
-    # Global variable points to use HTTPS or not
     msa_ip = gethostbyname(storage)
 
     # Trying to use cached session key
     if use_cache:
         cur_timestamp = datetime.timestamp(datetime.utcnow())
-        if not use_https:  # use http
+        if not USE_HTTPS:  # http
             cache_data = sql_op('SELECT expired,skey FROM skey_cache WHERE ip="{}" AND proto="http"'.format(storage))
-        else:  # use https
+        else:  # https
             cache_data = sql_op('SELECT expired,skey '
                                 'FROM skey_cache '
                                 'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip))
@@ -123,34 +125,26 @@ def get_skey(storage, hashed_login, use_cache=True):
     else:
         # Forming URL and trying to make GET query
         login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=hashed_login)
-
-        # Unpacking data from API
         return_code, sessionkey, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
-        # 1 - success, write cache in file and return session key
+        # 1 - success, write sessionkey to DB and return it
         if return_code == '1':
             expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=15))
-            if not use_https:  # http
-                if sql_op('SELECT ip FROM skey_cache WHERE ip = "{ip}" AND proto="http"'.format(ip=storage)) is None:
-                    # Inserting new cache
-                    sql_op('INSERT INTO skey_cache (dns_name, ip, proto, expired, skey)'
-                           'VALUES("{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage,
-                                                                                        ip=storage,
-                                                                                        time=expired_time,
-                                                                                        skey=sessionkey))
+            if not USE_HTTPS:  # http
+                if sql_op('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage)) is None:
+                    sql_op('INSERT INTO skey_cache VALUES ('
+                           '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage, ip=storage,
+                                                                                 time=expired_time, skey=sessionkey))
                 else:
-                    # Updating existing cache
                     sql_op('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
                            'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey, expired=expired_time, ip=storage))
             else:  # https
                 if sql_op('SELECT dns_name, ip FROM skey_cache '
-                          'WHERE dns_name="{dns_name}" AND ip="{ip}" AND proto="https"'.format(dns_name=storage,
-                                                                                               ip=msa_ip)) is None:
-                    sql_op('INSERT INTO skey_cache (dns_name, ip, proto, expired, skey) '
-                           'VALUES ("{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
-                                                                                              ip=msa_ip,
-                                                                                              expired=expired_time,
-                                                                                              skey=sessionkey))
+                          'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip)) is None:
+                    sql_op('INSERT INTO skey_cache VALUES ('
+                           '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage, ip=msa_ip,
+                                                                                      expired=expired_time,
+                                                                                      skey=sessionkey))
                 else:
                     sql_op('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
                            'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
@@ -166,27 +160,24 @@ def query_xmlapi(url, sessionkey):
     """
     Making HTTP request to HP MSA XML API and returns it's response as 3-element tuple.
     :param url:
-    URL to make GET request in <str>.
+    str: URL to make GET request.
     :param sessionkey:
-    Session key to authorize in <str>.
+    str: Session key to authorize.
     :return:
-    Tuple with return code <str>, return description <str> and etree object <xml.etree.ElementTree.Element>.
+    tuple: Tuple with str() return code, str() return description and etree object <xml.etree.ElementTree.Element>.
     """
 
-    # Helps with debug info
-    cur_fname = query_xmlapi.__name__
-
-    # Set file where we can find root CA for our storages
+    # Set file where we can find root CA
     ca_file = '/etc/ssl/certs/ca-bundle.crt'
 
     # Makes GET request to URL
     try:
-        if not use_https:  # http
+        if not USE_HTTPS:  # http
             url = 'http://' + url
             response = requests.get(url, headers={'sessionKey': sessionkey})
         else:  # https
             url = 'https://' + url
-            if verify_ssl:
+            if VERIFY_SSL:
                 response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
             else:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -199,82 +190,75 @@ def query_xmlapi(url, sessionkey):
     # Reading data from server XML response
     try:
         response_xml = eTree.fromstring(response.content)
-
-        # Parse result XML to get return code and description
         return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
         return_response = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
 
-        # Placing all data to the tuple which will be returned
         return return_code, return_response, response_xml
     except (ValueError, AttributeError) as e:
-        raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
+        raise SystemExit("ERROR: Cannot parse XML. {}".format(e))
 
 
 def get_health(storage, component, item, sessionkey):
     """
-    The function gets single item of MSA component. E.g. - status of one disk. It may be useful for Zabbix < 3.4.
+    The function gets single item of MSA component. E.g. - status of one disk.
     :param storage:
-    String with storage name in DNS or it's IP address.
+    str: Storage DNS name or it's IP address.
     :param sessionkey:
-    String with session key, which must be attach to the request header.
+    str: Session key, which must be attach to the request header.
     :param component:
-    Name of storage component, what we want to get - vdisks, disks, etc.
+    str: Name of storage component, what we want to get - vdisks, disks, etc.
     :param item:
-    ID number of getting component - number of disk, name of vdisk, etc.
+    str: ID number of getting component - number of disk, name of vdisk, etc.
     :return:
-    HTTP response text in XML format.
+    str: HTTP response text.
     """
 
-    # Forming URL
     if component in ('vdisks', 'disks'):
         get_url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
     elif component in ('controllers', 'enclosures'):
         get_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
-        raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
+        raise SystemExit('ERROR: Wrong component "{}"'.format(component))
 
-    # Making request to API
     resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
     if resp_return_code != '0':
         raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Matching dict
     md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
+
     # Returns health statuses
-    # disks and vdisks
     if component in ('vdisks', 'disks'):
         try:
-            health = resp_xml.find("./OBJECT[@name='{nd}']/PROPERTY[@name='health']".format(nd=md[component])).text
+            health = resp_xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health']".format(md[component])).text
         except AttributeError:
-            raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
-    # controllers and enclosures
+            raise SystemExit("ERROR: No such id: '{}'".format(item))
     elif component in ('controllers', 'enclosures'):
         # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status
         health_dict = {}
-        for ctrl in resp_xml.findall("./OBJECT[@name='{comp}']".format(comp=component)):
-            ctrl_id = ctrl.find("./PROPERTY[@name='{nd}']".format(nd=md[component])).text
-            # Add 'health' to dict
+        for ctrl in resp_xml.findall("./OBJECT[@name='{}']".format(component)):
+            ctrl_id = ctrl.find("./PROPERTY[@name='{}']".format(md[component])).text
             health_dict[ctrl_id] = ctrl.find("./PROPERTY[@name='health']").text
         # If given item presents in our dict - return status
         if item in health_dict:
             health = health_dict[item]
         else:
-            raise SystemExit("ERROR: No such id: '{item}'.".format(item=item))
+            raise SystemExit("ERROR: No such id: '{}'.".format(item))
     else:
-        raise SystemExit("ERROR: Wrong component '{comp}'".format(comp=component))
+        raise SystemExit("ERROR: Wrong component '{}'".format(component))
     return health
 
 
 def make_discovery(storage, component, sessionkey):
     """
     :param storage:
-    String with storage name in DNS or it's IP address.
+    str: Storage DNS name or it's IP address.
     :param sessionkey:
-    String with session key, which must be attach to the request header.
+    str: Session key, which must be attach to the request header.
     :param component:
-    Name of storage component, what we want to get - vdisks, disks, etc.
+    str: Name of storage component, what we want to get - vdisks, disks, etc.
     :return:
-    JSON with discovery data.
+    str: JSON with discovery data.
     """
 
     # Forming URL
@@ -292,14 +276,14 @@ def make_discovery(storage, component, sessionkey):
         if component.lower() == 'vdisks':
             for vdisk in xml.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.find("./PROPERTY[@name='name']").text
-                vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
+                vdisk_dict = {"{#VDISKNAME}": "{}".format(vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component.lower() == 'disks':
             for disk in xml.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.find("./PROPERTY[@name='location']").text
                 disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
-                disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
-                             "{#DISKSN}": "{sn}".format(sn=disk_sn)}
+                disk_dict = {"{#DISKLOCATION}": "{}".format(disk_loc),
+                             "{#DISKSN}": "{}".format(disk_sn)}
                 all_components.append(disk_dict)
         elif component.lower() == 'controllers':
             for ctrl in xml.findall("./OBJECT[@name='controllers']"):
@@ -315,9 +299,9 @@ def make_discovery(storage, component, sessionkey):
                 # for port, status in fc_ports.items():
                 #     raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
                 # Forming final dict
-                ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
-                             "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
-                             "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
+                ctrl_dict = {"{#CTRLID}": "{}".format(ctrl_id),
+                             "{#CTRLSN}": "{}".format(ctrl_sn),
+                             "{#CTRLIP}": "{}".format(ctrl_ip)}
                 all_components.append(ctrl_dict)
         elif component.lower() == 'enclosures':
             for encl in xml.findall(".OBJECT[@name='enclosures']"):
@@ -328,8 +312,8 @@ def make_discovery(storage, component, sessionkey):
                 # for ps in all_ps:
                 #     raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
                 # Forming final dict
-                encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
-                             "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
+                encl_dict = {"{#ENCLOSUREID}": "{}".format(encl_id),
+                             "{#ENCLOSURESN}": "{}".format(encl_sn)}
                 all_components.append(encl_dict)
 
         # Dumps JSON and return it
@@ -344,58 +328,46 @@ def make_discovery(storage, component, sessionkey):
 def get_all(storage, component, sessionkey):
     """
     :param storage:
-    String with storage name in DNS or it's IP address.
+    str: Storage DNS name or it's IP address.
     :param sessionkey:
-    String with session key, which must be attach to the request header.
+    str: Session key, which must be attach to the request header.
     :param component:
-    Name of storage component, what we want to get - vdisks, disks, etc.
+    str: Name of storage component, what we want to get - vdisks, disks, etc.
     :return:
-    JSON with all found data. For example:
-    Disks:
-    {"1.1": { "health": "OK", "temperature": 25, "work_hours": 1234}, "1.2": { ... }}
-    Vdisks:
-    {"vdisk01": { "health": "OK" }, vdisk02: {"health": "OK"} }
+    str: JSON with all found data. For example:
     """
 
-    get_url = '{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
+    url = '{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
 
     # Making request to API
-    resp_return_code, resp_description, xml = query_xmlapi(get_url, sessionkey)
+    resp_return_code, resp_description, xml = query_xmlapi(url, sessionkey)
     if resp_return_code != '0':
         raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
-    # Processing XML if response code 0
+    # Processing XML
     all_components = {}
     if component == 'disks':
         for PROP in xml.findall("./OBJECT[@name='drive']"):
-            # Getting data from XML
             disk_location = PROP.find("./PROPERTY[@name='location']").text
             disk_health = PROP.find("./PROPERTY[@name='health']").text
             disk_temp = PROP.find("./PROPERTY[@name='temperature-numeric']").text
             disk_work_hours = PROP.find("./PROPERTY[@name='power-on-hours']").text
-            # Making dict with one disk data
             disk_info = {
                     "health": disk_health,
                     "temperature": disk_temp,
                     "work_hours": disk_work_hours
             }
-            # Adding one disk to common dict
             all_components[disk_location] = disk_info
     elif component == 'vdisks':
         for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
-            # Getting data from XML
             vdisk_name = PROP.find("./PROPERTY[@name='name']").text
             vdisk_health = PROP.find("./PROPERTY[@name='health']").text
-
-            # Making dict with one vdisk data
             vdisk_info = {
                     "health": vdisk_health
             }
-            # Adding one vdisk to common dict
             all_components[vdisk_name] = vdisk_info
     elif component == 'controllers':
         for PROP in xml.findall("./OBJECT[@name='controllers']"):
-            # Getting data from XML
             ctrl_id = PROP.find("./PROPERTY[@name='controller-id']").text
             ctrl_health = PROP.find("./PROPERTY[@name='health']").text
             cf_health = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
@@ -412,7 +384,7 @@ def get_all(storage, component, sessionkey):
                     "status": port_status,
                     "sfp_status": sfp_status
                 }
-                # Making final dict with info of the one controller
+                # Making final dict
                 ctrl_info = {
                     "health": ctrl_health,
                     "cf_health": cf_health,
@@ -439,7 +411,7 @@ def get_all(storage, component, sessionkey):
                     "status": ps_status,
                     "temperature": ps_temp
                 }
-                # Making final dict with info of the one controller
+                # Making final dict
                 encl_info = {
                     "health": encl_health,
                     "status": encl_status,
@@ -448,7 +420,6 @@ def get_all(storage, component, sessionkey):
                 all_components[encl_id] = encl_info
     else:
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
-    # Making JSON with dumps() and return it (separators needs to make JSON compact)
     return json.dumps(all_components, separators=(',', ':'))
 
 
@@ -457,32 +428,32 @@ if __name__ == '__main__':
     VERSION = '0.4'
 
     # Parse all given arguments
-    parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
+    parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true', help='Making discovery')
     parser.add_argument('-g', '--get', '--health', type=str, help='ID of MSA part which status we want to get',
                         metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-f', '--loginfile', type=str, help='Path to file contains login and password')
-    parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
-                        metavar='[IP|DNSNAME]')
+    parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of MSA', metavar='[IP|DNSNAME]')
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
-                        help='MSA component for monitor or discover',
-                        metavar='[disks|vdisks|controllers|enclosures]')
-    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
-                        metavar='[direct|verify]')
+                        help='MSA component name.', metavar='[disks|vdisks|controllers|enclosures]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     parser.add_argument('--showcache', action='store_true', help='Display cache data')
+    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
+                        metavar='[direct|verify]')
     args = parser.parse_args()
 
     # Create cache table if it not exists
-    sql_op('CREATE TABLE IF NOT EXISTS skey_cache ('
-           'dns_name TEXT NOT NULL, '
-           'ip TEXT NOT NULL, '
-           'proto TEXT NOT NULL, '
-           'expired TEXT NOT NULL, '
-           'skey TEXT NOT NULL DEFAULT 0, '
-           'PRIMARY KEY (dns_name, ip, proto))')
+    CACHE_DB = prepare_tmp() + 'zbx-hpmsa.cache.db'
+    if not os.path.exists(CACHE_DB):
+        sql_op('CREATE TABLE IF NOT EXISTS skey_cache ('
+               'dns_name TEXT NOT NULL, '
+               'ip TEXT NOT NULL, '
+               'proto TEXT NOT NULL, '
+               'expired TEXT NOT NULL, '
+               'skey TEXT NOT NULL DEFAULT 0, '
+               'PRIMARY KEY (dns_name, ip, proto))')
 
     # Display cache data and exit
     if args.showcache:
@@ -494,14 +465,10 @@ if __name__ == '__main__':
                 name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), skey))
         exit(0)
 
-    # Make no possible to use '--discovery' and '--get' options together
-    if args.discovery and args.get:
-        raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
-
     # Set msa_connect - IP or DNS name and determine to use https or not
-    use_https = args.https in ['direct', 'verify']
-    verify_ssl = args.https == 'verify'
-    msa_connect = args.msa if verify_ssl else gethostbyname(args.msa)
+    USE_HTTPS = args.https in ['direct', 'verify']
+    VERIFY_SSL = args.https == 'verify'
+    MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
@@ -509,21 +476,21 @@ if __name__ == '__main__':
 
     # Make login hash string
     if args.loginfile:
-        cred_hash = make_pwd_hash(args.loginfile, isfile=True)
+        CRED_HASH = make_pwd_hash(args.loginfile, isfile=True)
     else:
-        cred_hash = make_pwd_hash('_'.join([args.user, args.password]))
+        CRED_HASH = make_pwd_hash('_'.join([args.user, args.password]))
 
     # Getting sessionkey
-    skey = get_skey(msa_connect, cred_hash)
+    skey = get_skey(MSA_CONNECT, CRED_HASH)
 
-    # If gets '--discovery' argument, make discovery
+    # Make discovery
     if args.discovery:
-        print(make_discovery(msa_connect, args.component, skey))
-    # If gets '--get' argument, getting component's health
+        print(make_discovery(MSA_CONNECT, args.component, skey))
+    # Getting health
     elif args.get and args.get != 'all':
-        print(get_health(msa_connect, args.component, args.get, skey))
+        print(get_health(MSA_CONNECT, args.component, args.get, skey))
     # Making bulk request for all possible component statuses
     elif args.get == 'all':
-        print(get_all(msa_connect, args.component, skey))
+        print(get_all(MSA_CONNECT, args.component, skey))
     else:
         raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")

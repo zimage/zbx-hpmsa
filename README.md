@@ -1,7 +1,7 @@
 # zbx-hpmsa
 Zabbix module for monitor HPE MSA storages via XML API.  
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
-Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
+Also you can contact me with Telegram: @asand3r
 
 zbx-hpmsa provides possibility to make Low Level Discovery of HPE MSA storage components via it's XML API. Also it can get health status of discovered component.  
 Program wrote with Python 3.6, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
@@ -14,9 +14,9 @@ Program wrote with Python 3.6, but works with Python 3.4 from CentOS (I didn't c
 
 ## Feautres  
 **Common:**
- - [x] Bulk requests for dependent items of Zabbix 3.4
+ - [x] Bulk requests for dependent items (Zabbix 3.4+)
  - [x] Session key cache (MSA login cache)
- - [x] HTTPS support (with limitations, look relevant section in Wiki)
+ - [x] HTTPS support
  - [x] Login cache (SQLite3)
 
 **Low Level Discovery:**
