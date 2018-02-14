@@ -8,6 +8,8 @@ Program wrote with Python 3.6, but works with Python 3.4 from CentOS (I didn't c
 
 **Latest stable version:** 0.4
 
+__Please, read 'Requirements and Installation' section in Wiki before use.__  
+
 ## Dependencies
  - requests
  - sqlite3
