@@ -40,9 +40,9 @@ HPE MSA DNS name or IP address.
 **-u|--user**  
 Sets MSA username  
 **-p|--password**  
-Sets password for MSA user
-**-f|--loginfile**
-Path to file with login and password data
+Sets password for MSA user  
+**-f|--loginfile**  
+Path to file with login and password data  
 **-d|--discovery**  
 Enables discovery mode.  
 **-c|--component**  
