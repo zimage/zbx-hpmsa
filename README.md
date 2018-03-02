@@ -17,7 +17,6 @@ __Please, read 'Requirements and Installation' section in Wiki before use.__
 ## Feautres  
 **Common:**
  - [x] Bulk requests for dependent items (Zabbix 3.4+)
- - [x] Session key cache (MSA login cache)
  - [x] HTTPS support
  - [x] Login cache (SQLite3)
 
