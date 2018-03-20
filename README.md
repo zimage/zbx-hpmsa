@@ -82,9 +82,8 @@ OK
 
 ## Zabbix templates
 In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment. It's using Low Level Discovery functionality
-and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage
-has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' options. You can check it it command line:
-```bash
+and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' options. Also it using HTTP and you must enable it or add '--https' to each script call in the template. You can check it it command line:
+```bash 
 [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all --user FOO --password BAR
 ```  
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
