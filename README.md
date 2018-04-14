@@ -34,6 +34,7 @@ __Please, read 'Requirements and Installation' section in Wiki before use.__
 
 ## TODO  
 - [ ] Add correct processing of round-robin DNS records
+- [ ] Template file generation for using with bulk request (until ZBXNEXT-4200 will be done)
 
 ## Supported arguments  
 **-m|--msa**  
