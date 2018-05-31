@@ -46,7 +46,7 @@ def prepare_tmp():
     """
 
     if os.name == 'posix':
-        tmp_dir = '/var/tmp/zbx-hpmsa/'
+        tmp_dir = '/dev/shm/zbx-hpmsa/'
         run_user = os.getenv('USER')
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
@@ -189,6 +189,8 @@ def query_xmlapi(url, sessionkey):
 
     # Reading data from server XML response
     try:
+        # with open('D:\\xml_new.xml', 'w') as file:
+        #     file.write(response.text)
         response_xml = eTree.fromstring(response.content)
         return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
         return_response = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
@@ -348,15 +350,20 @@ def get_all(storage, component, sessionkey):
     all_components = {}
     if component == 'disks':
         for PROP in xml.findall("./OBJECT[@name='drive']"):
+            # Processing main properties
             disk_location = PROP.find("./PROPERTY[@name='location']").text
             disk_health = PROP.find("./PROPERTY[@name='health']").text
-            disk_temp = PROP.find("./PROPERTY[@name='temperature-numeric']").text
-            disk_work_hours = PROP.find("./PROPERTY[@name='power-on-hours']").text
             disk_info = {
-                    "health": disk_health,
-                    "temperature": disk_temp,
-                    "work_hours": disk_work_hours
+                "health": disk_health
             }
+            # Processing advanced properties
+            disk_temp = PROP.find("./PROPERTY[@name='temperature-numeric']")
+            if disk_temp is not None:
+                disk_info['temperature'] = disk_temp.text
+            disk_work_hours = PROP.find("./PROPERTY[@name='power-on-hours']")
+            if disk_work_hours is not None:
+                disk_info['work_hours'] = disk_work_hours.text
+
             all_components[disk_location] = disk_info
     elif component == 'vdisks':
         for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
@@ -425,7 +432,7 @@ def get_all(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.4'
+    VERSION = '0.4.1'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
