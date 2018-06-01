@@ -430,9 +430,9 @@ def get_all(storage, component, sessionkey):
 
                     # Processing advanced ports properties
                     port_ext = dict()
-                    port_ext['port_status'] = FC.find("./PROPERTY[@name='status']")
-                    port_ext['port_status_num'] = FC.find("./PROPERTY[@name='status-numeric']")
-                    port_ext['sfp_status'] = FC.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']")
+                    port_ext['port-status'] = FC.find("./PROPERTY[@name='status']")
+                    port_ext['port-status-num'] = FC.find("./PROPERTY[@name='status-numeric']")
+                    port_ext['sfp-status'] = FC.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']")
                     for prop, value in port_ext.items():
                         if value is not None:
                             port_full_data[prop] = value.text
