@@ -357,8 +357,10 @@ def get_all(storage, component, sessionkey):
             # Processing main properties
             disk_location = PROP.find("./PROPERTY[@name='location']").text
             disk_health = PROP.find("./PROPERTY[@name='health']").text
+            disk_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             disk_full_data = {
-                "health": disk_health
+                "health": disk_health,
+                "health-num": disk_health_num
             }
 
             # Processing advanced properties
@@ -366,7 +368,7 @@ def get_all(storage, component, sessionkey):
             disk_ext['temperature'] = PROP.find("./PROPERTY[@name='temperature-numeric']")
             disk_ext['power-on-hours'] = PROP.find("./PROPERTY[@name='power-on-hours']")
             for prop, value in disk_ext.items():
-                if prop is not None:
+                if value is not None:
                     disk_full_data[prop] = value.text
             all_components[disk_location] = disk_full_data
     elif component == 'vdisks':
