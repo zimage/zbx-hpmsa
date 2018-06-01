@@ -189,8 +189,12 @@ def query_xmlapi(url, sessionkey):
 
     # Reading data from server XML response
     try:
-        # with open('D:\\xml_vdisks.xml', 'w') as file:
-        #     file.write(response.text)
+        if args.savexml is not None and 'login' not in url:
+            try:
+                with open(args.savexml, 'w') as xml_file:
+                    xml_file.write(response.text)
+            except PermissionError:
+                    raise SystemExit('ERROR: Cannot save XML file to "{}"'.format(args.savexml))
         response_xml = eTree.fromstring(response.content)
         return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
         return_response = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
@@ -443,31 +447,43 @@ def get_all(storage, component, sessionkey):
             all_components[ctrl_id] = ctrl_full_data
     elif component == 'enclosures':
         for PROP in xml.findall("./OBJECT[@name='enclosures']"):
+            # Processing main enclosure properties
             encl_id = PROP.find("./PROPERTY[@name='enclosure-id']").text
             encl_health = PROP.find("./PROPERTY[@name='health']").text
+            encl_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             encl_status = PROP.find("./PROPERTY[@name='status']").text
-            # Power supply info
-            ps_info = {}
+            encl_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
+            # Making full enclosure dict
+            encl_full_data = {
+                "health": encl_health,
+                "health-num": encl_health_num,
+                "status": encl_status,
+                "status-num": encl_status_num
+            }
+
+            # Getting info about all power supplies
+            encl_all_ps = {}
             for PS in PROP.findall("./OBJECT[@name='power-supplies']"):
+                # Processing main power supplies properties
                 ps_id = PS.find("./PROPERTY[@name='durable-id']").text
-                ps_name = PS.find("./PROPERTY[@name='name']").text
                 ps_health = PS.find("./PROPERTY[@name='health']").text
-                ps_status = PS.find("./PROPERTY[@name='status']").text
-                ps_temp = PS.find("./PROPERTY[@name='dctemp']").text
-                # Puts all info into dict
-                ps_info[ps_id] = {
-                    "name": ps_name,
+                ps_health_num = PS.find("./PROPERTY[@name='health-numeric']").text
+                ps_full_data = {
                     "health": ps_health,
-                    "status": ps_status,
-                    "temperature": ps_temp
+                    "health-num": ps_health_num
                 }
-                # Making final dict
-                encl_info = {
-                    "health": encl_health,
-                    "status": encl_status,
-                    "power_supplies": ps_info
-                }
-                all_components[encl_id] = encl_info
+                # Processing advanced power supplies properties
+                ps_ext = dict()
+                ps_ext['status'] = PS.find("./PROPERTY[@name='status']")
+                ps_ext['status-num'] = PS.find("./PROPERTY[@name='status-numeric']")
+                ps_ext['temperature'] = PS.find("./PROPERTY[@name='dctemp']")
+                for prop, value in ps_ext.items():
+                    if value is not None:
+                        ps_full_data[prop] = value.text
+                encl_all_ps[ps_id] = ps_full_data
+                # Adding power supplies data to the full enclosure dict
+                encl_full_data['power-supplies'] = encl_all_ps
+            all_components[encl_id] = encl_full_data
     else:
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
     return json.dumps(all_components, separators=(',', ':'))
@@ -489,6 +505,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component name.', metavar='[disks|vdisks|controllers|enclosures]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
+    parser.add_argument('-s', '--savexml', type=str, help='Save response from storage as XML')
     parser.add_argument('--showcache', action='store_true', help='Display cache data')
     parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
                         metavar='[direct|verify]')
