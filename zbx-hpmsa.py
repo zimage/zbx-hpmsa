@@ -189,7 +189,7 @@ def query_xmlapi(url, sessionkey):
 
     # Reading data from server XML response
     try:
-        # with open('D:\\xml_new.xml', 'w') as file:
+        # with open('D:\\xml_vdisks.xml', 'w') as file:
         #     file.write(response.text)
         response_xml = eTree.fromstring(response.content)
         return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
@@ -353,61 +353,94 @@ def get_all(storage, component, sessionkey):
             # Processing main properties
             disk_location = PROP.find("./PROPERTY[@name='location']").text
             disk_health = PROP.find("./PROPERTY[@name='health']").text
-            disk_info = {
+            disk_full_data = {
                 "health": disk_health
             }
-            # Processing advanced properties
-            disk_temperature = PROP.find("./PROPERTY[@name='temperature-numeric']")
-            if disk_temperature is not None:
-                disk_info['temperature'] = disk_temperature.text
-            disk_power_on_hours = PROP.find("./PROPERTY[@name='power-on-hours']")
-            if disk_power_on_hours is not None:
-                disk_info['power-on-hours'] = disk_power_on_hours.text
 
-            all_components[disk_location] = disk_info
+            # Processing advanced properties
+            disk_ext = dict()
+            disk_ext['temperature'] = PROP.find("./PROPERTY[@name='temperature-numeric']")
+            disk_ext['power-on-hours'] = PROP.find("./PROPERTY[@name='power-on-hours']")
+            for prop, value in disk_ext.items():
+                if prop is not None:
+                    disk_full_data[prop] = value.text
+            all_components[disk_location] = disk_full_data
     elif component == 'vdisks':
         for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
             vdisk_name = PROP.find("./PROPERTY[@name='name']").text
             vdisk_health = PROP.find("./PROPERTY[@name='health']").text
-            vdisk_info = {
-                    "health": vdisk_health
+            vdisk_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
+            vdisk_status = PROP.find("./PROPERTY[@name='status']").text
+            vdisk_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
+            vdisk_owner = PROP.find("./PROPERTY[@name='owner']").text
+            vdisk_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            vdisk_full_data = {
+                "health": vdisk_health,
+                "health-num": vdisk_health_num,
+                "status": vdisk_status,
+                "status-num": vdisk_status_num,
+                "owner": vdisk_owner,
+                "owner-pref": vdisk_owner_pref
             }
-            all_components[vdisk_name] = vdisk_info
+            all_components[vdisk_name] = vdisk_full_data
     elif component == 'controllers':
         for PROP in xml.findall("./OBJECT[@name='controllers']"):
             # Processing main controller properties
             ctrl_id = PROP.find("./PROPERTY[@name='controller-id']").text
             ctrl_health = PROP.find("./PROPERTY[@name='health']").text
-            # Making final dict
-            ctrl_info = {
-                "health": ctrl_health
+            ctrl_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
+            ctrl_status = PROP.find("./PROPERTY[@name='status']").text
+            ctrl_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
+            ctrl_rd_status = PROP.find("./PROPERTY[@name='redundancy-status']").text
+            ctrl_rd_status_num = PROP.find("./PROPERTY[@name='redundancy-status-numeric']").text
+            # Making full controller dict
+            ctrl_full_data = {
+                "health": ctrl_health,
+                "health-num": ctrl_health_num,
+                "status": ctrl_status,
+                "status-num": ctrl_status_num,
+                "redundancy": ctrl_rd_status,
+                "redundancy-num": ctrl_rd_status_num
             }
+
             # Processing advanced controller properties
-            cf_health = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']")
-            if cf_health is not None:
-                ctrl_info['cf_health'] = cf_health.text
+            ctrl_ext = dict()
+            ctrl_ext['flash-health'] = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']")
+            ctrl_ext['flash-health-num'] = PROP.find(
+                "./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health-numeric']")
+            ctrl_ext['flash-status'] = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='status']")
+            ctrl_ext['flash-status-num'] = PROP.find(
+                "./OBJECT[@basetype='compact-flash']/PROPERTY[@name='status-numeric']")
+            for prop, value in ctrl_ext.items():
+                if value is not None:
+                    ctrl_full_data[prop] = value.text
 
             # Getting info about all FC ports
-            ports_info = {}
-            for FC_PORT in PROP.findall("./OBJECT[@name='ports']"):
+            ctrl_ports = {}
+            for FC in PROP.findall("./OBJECT[@name='ports']"):
                 # Processing main ports properties
-                one_port_info = {}
-                port_name = FC_PORT.find("./PROPERTY[@name='port']").text
-                port_health = FC_PORT.find("./PROPERTY[@name='health']").text
-                one_port_info["health"] = port_health
+                port_name = FC.find("./PROPERTY[@name='port']").text
+                port_health = FC.find("./PROPERTY[@name='health']").text
+                port_health_num = FC.find("./PROPERTY[@name='health-numeric']").text
+                if port_health_num != '4':
+                    port_full_data = {
+                        "health": port_health,
+                        "health-num": port_health_num
+                    }
 
-                # Processing advanced ports properties
-                port_status = FC_PORT.find("./PROPERTY[@name='status']")
-                if port_status is not None:
-                    one_port_info["status"] = port_status.text
-                sfp_status = FC_PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']")
-                if sfp_status is not None:
-                    one_port_info["sfp_status"] = sfp_status.text
+                    # Processing advanced ports properties
+                    port_ext = dict()
+                    port_ext['port_status'] = FC.find("./PROPERTY[@name='status']")
+                    port_ext['port_status_num'] = FC.find("./PROPERTY[@name='status-numeric']")
+                    port_ext['sfp_status'] = FC.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']")
+                    for prop, value in port_ext.items():
+                        if value is not None:
+                            port_full_data[prop] = value.text
 
-                ports_info[port_name] = one_port_info
+                    ctrl_ports[port_name] = port_full_data
                 # Adds ports info to the final dict
-                ctrl_info['ports'] = ports_info
-                all_components[ctrl_id] = ctrl_info
+                ctrl_full_data['ports'] = ctrl_ports
+            all_components[ctrl_id] = ctrl_full_data
     elif component == 'enclosures':
         for PROP in xml.findall("./OBJECT[@name='enclosures']"):
             encl_id = PROP.find("./PROPERTY[@name='enclosure-id']").text
