@@ -331,7 +331,7 @@ def make_discovery(storage, component, sessionkey):
         raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
 
 
-def get_all(storage, component, sessionkey):
+def get_full_data(storage, component, sessionkey):
     """
     :param storage:
     str: Storage DNS name or it's IP address.
@@ -358,9 +358,11 @@ def get_all(storage, component, sessionkey):
             disk_location = PROP.find("./PROPERTY[@name='location']").text
             disk_health = PROP.find("./PROPERTY[@name='health']").text
             disk_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
+            disk_error = PROP.find("./PROPERTY[@name='error']").text
             disk_full_data = {
                 "health": disk_health,
-                "health-num": disk_health_num
+                "health-num": disk_health_num,
+                "error": disk_error
             }
 
             # Processing advanced properties
@@ -373,6 +375,7 @@ def get_all(storage, component, sessionkey):
             all_components[disk_location] = disk_full_data
     elif component == 'vdisks':
         for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
+            # Processing main vdisk properties
             vdisk_name = PROP.find("./PROPERTY[@name='name']").text
             vdisk_health = PROP.find("./PROPERTY[@name='health']").text
             vdisk_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
@@ -470,18 +473,47 @@ def get_all(storage, component, sessionkey):
                 ps_id = PS.find("./PROPERTY[@name='durable-id']").text
                 ps_health = PS.find("./PROPERTY[@name='health']").text
                 ps_health_num = PS.find("./PROPERTY[@name='health-numeric']").text
+                ps_status = PS.find("./PROPERTY[@name='status']").text
+                ps_status_num = PS.find("./PROPERTY[@name='status-numeric']").text
+                ps_dc12v = PS.find("./PROPERTY[@name='dc12v']").text
+                ps_dc5v = PS.find("./PROPERTY[@name='dc5v']").text
+                ps_dc33v = PS.find("./PROPERTY[@name='dc33v']").text
+                ps_dc12i = PS.find("./PROPERTY[@name='dc12i']").text
+                ps_dc5i = PS.find("./PROPERTY[@name='dc5i']").text
                 ps_full_data = {
                     "health": ps_health,
-                    "health-num": ps_health_num
+                    "health-num": ps_health_num,
+                    "status": ps_status,
+                    "status-num": ps_status_num,
+                    "power-12v": ps_dc12v,
+                    "power-5v": ps_dc5v,
+                    "power-33v": ps_dc33v,
+                    "power-12i": ps_dc12i,
+                    "power-5i": ps_dc5i
                 }
                 # Processing advanced power supplies properties
                 ps_ext = dict()
-                ps_ext['status'] = PS.find("./PROPERTY[@name='status']")
-                ps_ext['status-num'] = PS.find("./PROPERTY[@name='status-numeric']")
                 ps_ext['temperature'] = PS.find("./PROPERTY[@name='dctemp']")
                 for prop, value in ps_ext.items():
                     if value is not None:
                         ps_full_data[prop] = value.text
+                # Fans
+                for FAN in PROP.findall(".//OBJECT[@name='fan-details']"):
+                    # Processing main fan properties
+                    fan_id = FAN.find(".PROPERTY[@name='durable-id']").text
+                    fan_health = FAN.find(".PROPERTY[@name='health']").text
+                    fan_health_num = FAN.find(".PROPERTY[@name='health-numeric']").text
+                    fan_status = FAN.find(".PROPERTY[@name='status']").text
+                    fan_status_num = FAN.find(".PROPERTY[@name='status-numeric']").text
+                    fan_speed = FAN.find(".PROPERTY[@name='speed']").text
+                    fan_full_data = {
+                        "health": fan_health,
+                        "health-num": fan_health_num,
+                        "status": fan_status,
+                        "status-num": fan_status_num,
+                        "speed": fan_speed
+                    }
+                    ps_full_data[fan_id] = fan_full_data
                 encl_all_ps[ps_id] = ps_full_data
                 # Adding power supplies data to the full enclosure dict
                 encl_full_data['power-supplies'] = encl_all_ps
@@ -560,6 +592,6 @@ if __name__ == '__main__':
         print(get_health(MSA_CONNECT, args.component, args.get, skey))
     # Making bulk request for all possible component statuses
     elif args.get == 'all':
-        print(get_all(MSA_CONNECT, args.component, skey))
+        print(get_full_data(MSA_CONNECT, args.component, skey))
     else:
         raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
