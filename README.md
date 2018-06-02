@@ -57,7 +57,7 @@ Print script version and exit.
 Using HTTPS instead HTTP.  
 **--showcache**  
 Print cache content and exit.  
-**--savexml**
+**--savexml**  
 Save API response text to a xml.file. Accepts path to some file.
 
 
