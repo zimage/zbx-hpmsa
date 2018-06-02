@@ -6,7 +6,7 @@ Also you can contact me with Telegram: @asand3r
 zbx-hpmsa provides possibility to make Low Level Discovery of HPE MSA storage components via it's XML API. Also it can get health status of discovered component.  
 Program wrote with Python 3.6, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
 
-**Latest stable version:** 0.4
+**Latest stable version:** 0.4.1
 
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
 
@@ -57,6 +57,8 @@ Print script version and exit.
 Using HTTPS instead HTTP.  
 **--showcache**  
 Print cache content and exit.
+**--savexml**
+Save API response text to a xml.file. Accepts path to some file.
 
 
 ## Usage
