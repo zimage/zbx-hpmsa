@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 import os
-import requests
 import json
 import urllib3
-import sqlite3
+from hashlib import md5
+from socket import gethostbyname
+from argparse import ArgumentParser
 from xml.etree import ElementTree as eTree
 from datetime import datetime, timedelta
-from hashlib import md5
-from argparse import ArgumentParser
-from socket import gethostbyname
+
+import sqlite3
+import requests
 
 
 def make_pwd_hash(cred, isfile=False):
@@ -310,7 +311,7 @@ def make_discovery(storage, component, sessionkey):
                              "{#CTRLIP}": "{}".format(ctrl_ip)}
                 all_components.append(ctrl_dict)
         elif component.lower() == 'enclosures':
-            for encl in xml.findall(".OBJECT[@name='enclosures']"):
+            for encl in xml.findall("./OBJECT[@name='enclosures']"):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
                 # all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
