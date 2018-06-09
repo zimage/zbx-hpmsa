@@ -279,112 +279,110 @@ def make_discovery(storage, component, sessionkey):
         raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Eject XML from response
-    if component is not None:
-        all_components = []
-        # Vdisks is deprecated in HPE MSA 1040/2040+ so it stay here for compatibilities
-        if component == 'disks':
-            for disk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                disk_id = disk.find("./PROPERTY[@name='location']").text
-                disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
-                lld_dict = {
-                    "{#DISK.ID}": "{}".format(disk_id),
-                    "{#DISK.SN}": "{}".format(disk_sn)
-                }
-                all_components.append(lld_dict)
-        elif component == 'vdisks':
-            for vdisk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                vdisk_id = vdisk.find("./PROPERTY[@name='name']").text
-                vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
-                lld_dict = {
-                    "{#VDISK.ID}": "{}".format(vdisk_id),
-                    "{#VDISK.TYPE}": "{}".format(vdisk_type)
-                }
-                all_components.append(lld_dict)
-        elif component == 'pools':
-            for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                pool_id = pool.find("./PROPERTY[@name='name']").text
-                pool_type = pool.find("./PROPERTY[@name='storage-type']").text
-                lld_dict = {
-                    "{#POOL.ID}": "{}".format(pool_id),
-                    "{#POOL.TYPE}": "{}".format(pool_type)
-                }
-                all_components.append(lld_dict)
-        elif component == 'disk-groups':
-            for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                dg_id = pool.find("./PROPERTY[@name='name']").text
-                dg_type = pool.find("./PROPERTY[@name='storage-type']").text
-                lld_dict = {
-                    "{#DG.ID}": "{}".format(dg_id),
-                    "{#DG.TYPE}": "{}".format(dg_type)
-                }
-                all_components.append(lld_dict)
-        elif component == 'volumes':
-            for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                volume_id = pool.find("./PROPERTY[@name='volume-name']").text
-                volume_type = pool.find("./PROPERTY[@name='volume-type']").text
-                lld_dict = {
-                    "{#VOLUME.ID}": "{}".format(volume_id),
-                    "{#VOLUME.TYPE}": "{}".format(volume_type)
-                }
-                all_components.append(lld_dict)
-        elif component == 'controllers':
-            for ctrl in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
-                ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
-                ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
-                lld_dict = {
-                    "{#CONTROLLER.ID}": "{}".format(ctrl_id),
-                    "{#CONTROLLER.SN}": "{}".format(ctrl_sn),
-                    "{#CONTROLLER.IP}": "{}".format(ctrl_ip)
-                }
-                all_components.append(lld_dict)
-        elif component == 'enclosures':
-            for encl in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
-                encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
-                lld_dict = {
-                    "{#ENCLOSURE.ID}": "{}".format(encl_id),
-                    "{#ENCLOSURE.SN}": "{}".format(encl_sn)
-                }
-                all_components.append(lld_dict)
-        elif component == 'power-supplies':
-            for PS in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                ps_id = PS.find("./PROPERTY[@name='durable-id']").text
-                ps_loc = PS.find("./PROPERTY[@name='location']").text
-                lld_dict = {
-                    "{#POWERSUPPLY.ID}": "{}".format(ps_id),
-                    "{#POWERSUPPLY.LOCATION}": "{}".format(ps_loc)
-                }
-                all_components.append(lld_dict)
-        elif component == 'fans':
-            for FAN in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                fan_id = FAN.find("./PROPERTY[@name='durable-id']").text
-                fan_loc = FAN.find("./PROPERTY[@name='location']").text
-                lld_dict = {
-                    "{#FAN.ID}": "{}".format(fan_id),
-                    "{#FAN.LOCATION}": "{}".format(fan_loc)
-                }
-                all_components.append(lld_dict)
-        elif component == 'ports':
-            for PORT in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                port_id = PORT.find("./PROPERTY[@name='port']").text
-                port_type = PORT.find("./PROPERTY[@name='port-type']").text
-                port_speed = PORT.find("./PROPERTY[@name='actual-speed']").text
-                port_sfp = PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-present']").text
-                lld_dict = {
-                    "{#PORT.ID}": "{}".format(port_id),
-                    "{#PORT.TYPE}": "{}".format(port_type),
-                    "{#PORT.SPEED}": "{}".format(port_speed),
-                    "{#PORT.SFP}": "{}".format(port_sfp)
-                }
-                all_components.append(lld_dict)
-        # Dumps JSON and return it
-        return json.dumps({"data": all_components}, separators=(',', ':'))
-    else:
-        raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
+    all_components = []
+    # Vdisks is deprecated in HPE MSA 1040/2040+ so it stay here for compatibilities
+    if component == 'disks':
+        for disk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            disk_id = disk.find("./PROPERTY[@name='location']").text
+            disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
+            lld_dict = {
+                "{#DISK.ID}": "{}".format(disk_id),
+                "{#DISK.SN}": "{}".format(disk_sn)
+            }
+            all_components.append(lld_dict)
+    elif component == 'vdisks':
+        for vdisk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            vdisk_id = vdisk.find("./PROPERTY[@name='name']").text
+            vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
+            lld_dict = {
+                "{#VDISK.ID}": "{}".format(vdisk_id),
+                "{#VDISK.TYPE}": "{}".format(vdisk_type)
+            }
+            all_components.append(lld_dict)
+    elif component == 'pools':
+        for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            pool_id = pool.find("./PROPERTY[@name='name']").text
+            pool_type = pool.find("./PROPERTY[@name='storage-type']").text
+            lld_dict = {
+                "{#POOL.ID}": "{}".format(pool_id),
+                "{#POOL.TYPE}": "{}".format(pool_type)
+            }
+            all_components.append(lld_dict)
+    elif component == 'disk-groups':
+        for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            dg_id = pool.find("./PROPERTY[@name='name']").text
+            dg_type = pool.find("./PROPERTY[@name='storage-type']").text
+            lld_dict = {
+                "{#DG.ID}": "{}".format(dg_id),
+                "{#DG.TYPE}": "{}".format(dg_type)
+            }
+            all_components.append(lld_dict)
+    elif component == 'volumes':
+        for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            volume_id = pool.find("./PROPERTY[@name='volume-name']").text
+            volume_type = pool.find("./PROPERTY[@name='volume-type']").text
+            lld_dict = {
+                "{#VOLUME.ID}": "{}".format(volume_id),
+                "{#VOLUME.TYPE}": "{}".format(volume_type)
+            }
+            all_components.append(lld_dict)
+    elif component == 'controllers':
+        for ctrl in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
+            ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
+            ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
+            lld_dict = {
+                "{#CONTROLLER.ID}": "{}".format(ctrl_id),
+                "{#CONTROLLER.SN}": "{}".format(ctrl_sn),
+                "{#CONTROLLER.IP}": "{}".format(ctrl_ip)
+            }
+            all_components.append(lld_dict)
+    elif component == 'enclosures':
+        for encl in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
+            encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+            lld_dict = {
+                "{#ENCLOSURE.ID}": "{}".format(encl_id),
+                "{#ENCLOSURE.SN}": "{}".format(encl_sn)
+            }
+            all_components.append(lld_dict)
+    elif component == 'power-supplies':
+        for PS in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            ps_id = PS.find("./PROPERTY[@name='durable-id']").text
+            ps_loc = PS.find("./PROPERTY[@name='location']").text
+            lld_dict = {
+                "{#POWERSUPPLY.ID}": "{}".format(ps_id),
+                "{#POWERSUPPLY.LOCATION}": "{}".format(ps_loc)
+            }
+            all_components.append(lld_dict)
+    elif component == 'fans':
+        for FAN in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            fan_id = FAN.find("./PROPERTY[@name='durable-id']").text
+            fan_loc = FAN.find("./PROPERTY[@name='location']").text
+            lld_dict = {
+                "{#FAN.ID}": "{}".format(fan_id),
+                "{#FAN.LOCATION}": "{}".format(fan_loc)
+            }
+            all_components.append(lld_dict)
+    elif component == 'ports':
+        for PORT in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            port_id = PORT.find("./PROPERTY[@name='port']").text
+            port_type = PORT.find("./PROPERTY[@name='port-type']").text
+            port_speed = PORT.find("./PROPERTY[@name='actual-speed']").text
+            port_sfp = PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-present']").text
+            lld_dict = {
+                "{#PORT.ID}": "{}".format(port_id),
+                "{#PORT.TYPE}": "{}".format(port_type),
+                "{#PORT.SPEED}": "{}".format(port_speed),
+                "{#PORT.SFP}": "{}".format(port_sfp)
+            }
+            all_components.append(lld_dict)
+
+    # Dumps JSON and return it
+    return json.dumps({"data": all_components}, separators=(',', ':'))
 
 
-def get_full_data(storage, component, sessionkey):
+def get_full_json(storage, component, sessionkey):
     """
     :param storage:
     str: Storage DNS name or it's IP address.
@@ -429,7 +427,6 @@ def get_full_data(storage, component, sessionkey):
             all_components[disk_location] = disk_full_data
     elif component == 'vdisks':
         for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
-            # Processing main vdisk properties
             vdisk_name = PROP.find("./PROPERTY[@name='name']").text
             vdisk_health = PROP.find("./PROPERTY[@name='health']").text
             vdisk_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
@@ -446,6 +443,52 @@ def get_full_data(storage, component, sessionkey):
                 "owner-pref": vdisk_owner_pref
             }
             all_components[vdisk_name] = vdisk_full_data
+    elif component == 'pools':
+        for PROP in xml.findall("./OBJECT[@name='pools']"):
+            pool_name = PROP.find("./PROPERTY[@name='name']").text
+            pool_health = PROP.find("./PROPERTY[@name='health']").text
+            pool_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
+            pool_owner = PROP.find("./PROPERTY[@name='owner']").text
+            pool_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            pool_full_data = {
+                "health": pool_health,
+                "health-num": pool_health_num,
+                "owner": pool_owner,
+                "owner-pref": pool_owner_pref
+            }
+            all_components[pool_name] = pool_full_data
+    elif component == 'disk-groups':
+        for PROP in xml.findall("./OBJECT[@name='disk-group']"):
+            dg_name = PROP.find("./PROPERTY[@name='name']").text
+            dg_health = PROP.find("./PROPERTY[@name='health']").text
+            dg_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
+            dg_status = PROP.find("./PROPERTY[@name='status']").text
+            dg_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
+            dg_owner = PROP.find("./PROPERTY[@name='owner']").text
+            dg_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            dg_full_data = {
+                "health": dg_health,
+                "health-num": dg_health_num,
+                "status": dg_status,
+                "status-num": dg_status_num,
+                "owner": dg_owner,
+                "owner-pref": dg_owner_pref
+            }
+            all_components[dg_name] = dg_full_data
+    elif component == 'volumes':
+        for PROP in xml.findall("./OBJECT[@name='volume']"):
+            volume_name = PROP.find("./PROPERTY[@name='volume-name']").text
+            volume_health = PROP.find("./PROPERTY[@name='health']").text
+            volume_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
+            volume_owner = PROP.find("./PROPERTY[@name='owner']").text
+            volume_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            volume_full_data = {
+                "health": volume_health,
+                "health-num": volume_health_num,
+                "owner": volume_owner,
+                "owner-pref": volume_owner_pref
+            }
+            all_components[volume_name] = volume_full_data
     elif component == 'controllers':
         for PROP in xml.findall("./OBJECT[@name='controllers']"):
             # Processing main controller properties
@@ -494,7 +537,7 @@ def get_full_data(storage, component, sessionkey):
                 "status-num": encl_status_num
             }
             all_components[encl_id] = encl_full_data
-    elif component == 'ps':
+    elif component == 'power-supplies':
         # Getting info about all power supplies
         for PS in xml.findall("./OBJECT[@name='power-supplies']"):
             # Processing main power supplies properties
@@ -657,6 +700,6 @@ if __name__ == '__main__':
         print(get_health(MSA_CONNECT, args.component, args.get_health, skey))
     # Making bulk request for all possible component statuses
     elif args.get_health == 'full':
-        print(get_full_data(MSA_CONNECT, args.component, skey))
+        print(get_full_json(MSA_CONNECT, args.component, skey))
     else:
         raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
