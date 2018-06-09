@@ -190,9 +190,9 @@ def query_xmlapi(url, sessionkey):
 
     # Reading data from server XML response
     try:
-        if args.savexml is not None and 'login' not in url:
+        if args.save_xml is not None and 'login' not in url:
             try:
-                with open(args.savexml, 'w') as xml_file:
+                with open(args.save_xml, 'w') as xml_file:
                     xml_file.write(response.text)
             except PermissionError:
                     raise SystemExit('ERROR: Cannot save XML file to "{}"'.format(args.savexml))
@@ -222,30 +222,32 @@ def get_health(storage, component, item, sessionkey):
 
     if component in ('vdisks', 'disks'):
         get_url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
-    elif component in ('controllers', 'enclosures'):
+    elif component in ('controllers', 'enclosures', 'power-supplies', 'fans', 'ports'):
         get_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
         raise SystemExit('ERROR: Wrong component "{}"'.format(component))
 
     resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
     if resp_return_code != '0':
-        raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
+        raise SystemExit('ERROR: {} : {}'.format(resp_return_code, resp_description))
 
-    # Matching dict
-    md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
+    # ID Matching dict
+    id_md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'power-supplies': 'durable-id',
+             'fans': 'durable-id', 'ports': 'port', 'fan-details': 'durable-id'
+             }
 
     # Returns health statuses
     if component in ('vdisks', 'disks'):
         try:
-            health = resp_xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health']".format(md[component])).text
+            health = resp_xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health']".format(NAMES_MATCH[component])).text
         except AttributeError:
             raise SystemExit("ERROR: No such id: '{}'".format(item))
-    elif component in ('controllers', 'enclosures'):
-        # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status
+    elif component in ('controllers', 'enclosures', 'power-supplies', 'fans', 'ports'):
+        # We'll make dict {ctrl_id: health} because of we cannot call API for exact controller status
         health_dict = {}
-        for ctrl in resp_xml.findall("./OBJECT[@name='{}']".format(component)):
-            ctrl_id = ctrl.find("./PROPERTY[@name='{}']".format(md[component])).text
-            health_dict[ctrl_id] = ctrl.find("./PROPERTY[@name='health']").text
+        for OBJ in resp_xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+            comp_id = OBJ.find("./PROPERTY[@name='{}']".format(id_md[component])).text
+            health_dict[comp_id] = OBJ.find("./PROPERTY[@name='health']").text
         # If given item presents in our dict - return status
         if item in health_dict:
             health = health_dict[item]
@@ -269,65 +271,115 @@ def make_discovery(storage, component, sessionkey):
     """
 
     # Forming URL
-    show_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+    url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Making request to API
-    resp_return_code, resp_description, xml = query_xmlapi(show_url, sessionkey)
+    resp_return_code, resp_description, xml = query_xmlapi(url, sessionkey)
     if resp_return_code != '0':
         raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
 
     # Eject XML from response
     if component is not None:
         all_components = []
-        raw_json_part = ''
-        if component.lower() == 'vdisks':
-            for vdisk in xml.findall("./OBJECT[@name='virtual-disk']"):
-                vdisk_name = vdisk.find("./PROPERTY[@name='name']").text
-                vdisk_dict = {"{#VDISKNAME}": "{}".format(vdisk_name)}
-                all_components.append(vdisk_dict)
-        elif component.lower() == 'disks':
-            for disk in xml.findall("./OBJECT[@name='drive']"):
-                disk_loc = disk.find("./PROPERTY[@name='location']").text
+        # Vdisks is deprecated in HPE MSA 1040/2040+ so it stay here for compatibilities
+        if component == 'disks':
+            for disk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                disk_id = disk.find("./PROPERTY[@name='location']").text
                 disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
-                disk_dict = {"{#DISKLOCATION}": "{}".format(disk_loc),
-                             "{#DISKSN}": "{}".format(disk_sn)}
-                all_components.append(disk_dict)
-        elif component.lower() == 'controllers':
-            for ctrl in xml.findall("./OBJECT[@name='controllers']"):
+                lld_dict = {
+                    "{#DISK.ID}": "{}".format(disk_id),
+                    "{#DISK.SN}": "{}".format(disk_sn)
+                }
+                all_components.append(lld_dict)
+        # elif component == 'vdisks':
+        #     for vdisk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+        #         vdisk_id = vdisk.find("./PROPERTY[@name='name']").text
+        #         vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
+        #         lld_dict = {
+        #             "{#VDISK.ID}": "{}".format(vdisk_id),
+        #             "{#VDISK.TYPE}": "{}".format(vdisk_type)
+        #         }
+        #         all_components.append(lld_dict)
+        elif component in ['pools', 'vdisks', 'disk-groups']:
+            for PROP in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                comp_id = PROP.find("./PROPERTY[@name='name']").text
+                comp_type = PROP.find("./PROPERTY[@name='storage-type']").text
+                # lld_dict = {
+                #     "{#POOL.ID}": "{}".format(pool_id),
+                #     "{#POOL.TYPE}": "{}".format(pool_type)
+                # }
+                all_components.append(dict(zip(LLD_MACROS[component], [comp_id, comp_type])))
+        # elif component == 'disk-groups':
+        #     for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+        #         dg_id = pool.find("./PROPERTY[@name='name']").text
+        #         dg_type = pool.find("./PROPERTY[@name='storage-type']").text
+        #         lld_dict = {
+        #             "{#DG.ID}": "{}".format(dg_id),
+        #             "{#DG.TYPE}": "{}".format(dg_type)
+        #         }
+        #         all_components.append(lld_dict)
+        elif component == 'volumes':
+            for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                volume_id = pool.find("./PROPERTY[@name='volume-name']").text
+                volume_type = pool.find("./PROPERTY[@name='volume-type']").text
+                lld_dict = {
+                    "{#VOLUME.ID}": "{}".format(volume_id),
+                    "{#VOLUME.TYPE}": "{}".format(volume_type)
+                }
+                all_components.append(lld_dict)
+        elif component == 'controllers':
+            for ctrl in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
                 ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
                 ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
                 ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
-                # Find all possible ports
-                # fc_ports = {}
-                # for port in ctrl.findall("./OBJECT[@name='ports']"):
-                #     port_name = port.find("./PROPERTY[@name='port']").text
-                #     sfp_present = port.find(".//PROPERTY[@name='sfp-present-numeric']").text
-                #     fc_ports[port_name] = sfp_present
-                # for port, status in fc_ports.items():
-                #     raw_json_part += '{{"{{#PORTNAME}}":"{}","{{#SFPPRESENT}}":"{}"}},'.format(port, status)
-                # Forming final dict
-                ctrl_dict = {"{#CTRLID}": "{}".format(ctrl_id),
-                             "{#CTRLSN}": "{}".format(ctrl_sn),
-                             "{#CTRLIP}": "{}".format(ctrl_ip)}
-                all_components.append(ctrl_dict)
-        elif component.lower() == 'enclosures':
-            for encl in xml.findall("./OBJECT[@name='enclosures']"):
+                lld_dict = {
+                    "{#CONTROLLER.ID}": "{}".format(ctrl_id),
+                    "{#CONTROLLER.SN}": "{}".format(ctrl_sn),
+                    "{#CONTROLLER.IP}": "{}".format(ctrl_ip)
+                }
+                all_components.append(lld_dict)
+        elif component == 'enclosures':
+            for encl in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
-                # all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
-                #           for PS in encl.findall("./OBJECT[@name='power-supplies']")]
-                # for ps in all_ps:
-                #     raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
-                # Forming final dict
-                encl_dict = {"{#ENCLOSUREID}": "{}".format(encl_id),
-                             "{#ENCLOSURESN}": "{}".format(encl_sn)}
-                all_components.append(encl_dict)
-
+                lld_dict = {
+                    "{#ENCLOSURE.ID}": "{}".format(encl_id),
+                    "{#ENCLOSURE.SN}": "{}".format(encl_sn)
+                }
+                all_components.append(lld_dict)
+        elif component == 'power-supplies':
+            for PS in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                ps_id = PS.find("./PROPERTY[@name='durable-id']").text
+                ps_loc = PS.find("./PROPERTY[@name='location']").text
+                lld_dict = {
+                    "{#POWERSUPPLY.ID}": "{}".format(ps_id),
+                    "{#POWERSUPPLY.LOCATION}": "{}".format(ps_loc)
+                }
+                all_components.append(lld_dict)
+        elif component == 'fans':
+            for FAN in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                fan_id = FAN.find("./PROPERTY[@name='durable-id']").text
+                fan_loc = FAN.find("./PROPERTY[@name='location']").text
+                lld_dict = {
+                    "{#FAN.ID}": "{}".format(fan_id),
+                    "{#FAN.LOCATION}": "{}".format(fan_loc)
+                }
+                all_components.append(lld_dict)
+        elif component == 'ports':
+            for PORT in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                port_id = PORT.find("./PROPERTY[@name='port']").text
+                port_type = PORT.find("./PROPERTY[@name='port-type']").text
+                port_speed = PORT.find("./PROPERTY[@name='actual-speed']").text
+                port_sfp = PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-present']").text
+                lld_dict = {
+                    "{#PORT.ID}": "{}".format(port_id),
+                    "{#PORT.TYPE}": "{}".format(port_type),
+                    "{#PORT.SPEED}": "{}".format(port_speed),
+                    "{#PORT.SFP}": "{}".format(port_sfp)
+                }
+                all_components.append(lld_dict)
         # Dumps JSON and return it
-        if not raw_json_part:
-            return json.dumps({"data": all_components}, separators=(',', ':'))
-        else:
-            return json.dumps({"data": all_components}, separators=(',', ':'))[:-2] + ',' + raw_json_part[:-1] + ']}'
+        return json.dumps({"data": all_components}, separators=(',', ':'))
     else:
         raise SystemExit('ERROR: You must provide the storage component (vdisks, disks, controllers, enclosures)')
 
@@ -344,7 +396,8 @@ def get_full_data(storage, component, sessionkey):
     str: JSON with all found data. For example:
     """
 
-    url = '{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
+    # Forming URL
+    url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Making request to API
     resp_return_code, resp_description, xml = query_xmlapi(url, sessionkey)
@@ -424,32 +477,6 @@ def get_full_data(storage, component, sessionkey):
             for prop, value in ctrl_ext.items():
                 if value is not None:
                     ctrl_full_data[prop] = value.text
-
-            # Getting info about all FC ports
-            ctrl_ports = {}
-            for FC in PROP.findall("./OBJECT[@name='ports']"):
-                # Processing main ports properties
-                port_name = FC.find("./PROPERTY[@name='port']").text
-                port_health = FC.find("./PROPERTY[@name='health']").text
-                port_health_num = FC.find("./PROPERTY[@name='health-numeric']").text
-                if port_health_num != '4':
-                    port_full_data = {
-                        "health": port_health,
-                        "health-num": port_health_num
-                    }
-
-                    # Processing advanced ports properties
-                    port_ext = dict()
-                    port_ext['port-status'] = FC.find("./PROPERTY[@name='status']")
-                    port_ext['port-status-num'] = FC.find("./PROPERTY[@name='status-numeric']")
-                    port_ext['sfp-status'] = FC.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']")
-                    for prop, value in port_ext.items():
-                        if value is not None:
-                            port_full_data[prop] = value.text
-
-                    ctrl_ports[port_name] = port_full_data
-                # Adds ports info to the final dict
-                ctrl_full_data['ports'] = ctrl_ports
             all_components[ctrl_id] = ctrl_full_data
     elif component == 'enclosures':
         for PROP in xml.findall("./OBJECT[@name='enclosures']"):
@@ -466,12 +493,15 @@ def get_full_data(storage, component, sessionkey):
                 "status": encl_status,
                 "status-num": encl_status_num
             }
-
-            # Getting info about all power supplies
-            encl_all_ps = {}
-            for PS in PROP.findall("./OBJECT[@name='power-supplies']"):
-                # Processing main power supplies properties
-                ps_id = PS.find("./PROPERTY[@name='durable-id']").text
+            all_components[encl_id] = encl_full_data
+    elif component == 'ps':
+        # Getting info about all power supplies
+        for PS in xml.findall("./OBJECT[@name='power-supplies']"):
+            # Processing main power supplies properties
+            ps_id = PS.find("./PROPERTY[@name='durable-id']").text
+            ps_name = PS.find("./PROPERTY[@name='name']").text
+            # Exclude voltage regulators
+            if ps_name.lower().find('voltage regulator') == -1:
                 ps_health = PS.find("./PROPERTY[@name='health']").text
                 ps_health_num = PS.find("./PROPERTY[@name='health-numeric']").text
                 ps_status = PS.find("./PROPERTY[@name='status']").text
@@ -498,27 +528,46 @@ def get_full_data(storage, component, sessionkey):
                 for prop, value in ps_ext.items():
                     if value is not None:
                         ps_full_data[prop] = value.text
-                # Fans
-                for FAN in PROP.findall(".//OBJECT[@name='fan-details']"):
-                    # Processing main fan properties
-                    fan_id = FAN.find(".PROPERTY[@name='durable-id']").text
-                    fan_health = FAN.find(".PROPERTY[@name='health']").text
-                    fan_health_num = FAN.find(".PROPERTY[@name='health-numeric']").text
-                    fan_status = FAN.find(".PROPERTY[@name='status']").text
-                    fan_status_num = FAN.find(".PROPERTY[@name='status-numeric']").text
-                    fan_speed = FAN.find(".PROPERTY[@name='speed']").text
-                    fan_full_data = {
-                        "health": fan_health,
-                        "health-num": fan_health_num,
-                        "status": fan_status,
-                        "status-num": fan_status_num,
-                        "speed": fan_speed
-                    }
-                    ps_full_data[fan_id] = fan_full_data
-                encl_all_ps[ps_id] = ps_full_data
-                # Adding power supplies data to the full enclosure dict
-                encl_full_data['power-supplies'] = encl_all_ps
-            all_components[encl_id] = encl_full_data
+                all_components[ps_id] = ps_full_data
+    elif component == 'fans':
+        # Getting info about all fans
+        for FAN in xml.findall("./OBJECT[@name='fan-details']"):
+            # Processing main fan properties
+            fan_id = FAN.find(".PROPERTY[@name='durable-id']").text
+            fan_health = FAN.find(".PROPERTY[@name='health']").text
+            fan_health_num = FAN.find(".PROPERTY[@name='health-numeric']").text
+            fan_status = FAN.find(".PROPERTY[@name='status']").text
+            fan_status_num = FAN.find(".PROPERTY[@name='status-numeric']").text
+            fan_speed = FAN.find(".PROPERTY[@name='speed']").text
+            fan_full_data = {
+                "health": fan_health,
+                "health-num": fan_health_num,
+                "status": fan_status,
+                "status-num": fan_status_num,
+                "speed": fan_speed
+            }
+            all_components[fan_id] = fan_full_data
+    elif component == 'ports':
+        for FC in xml.findall("./OBJECT[@name='ports']"):
+            # Processing main ports properties
+            port_name = FC.find("./PROPERTY[@name='port']").text
+            port_health = FC.find("./PROPERTY[@name='health']").text
+            port_health_num = FC.find("./PROPERTY[@name='health-numeric']").text
+            if port_health_num != '4':
+                port_full_data = {
+                    "health": port_health,
+                    "health-num": port_health_num
+                }
+
+                # Processing advanced ports properties
+                port_ext = dict()
+                port_ext['port-status'] = FC.find("./PROPERTY[@name='status']")
+                port_ext['port-status-num'] = FC.find("./PROPERTY[@name='status-numeric']")
+                port_ext['sfp-status'] = FC.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']")
+                for prop, value in port_ext.items():
+                    if value is not None:
+                        port_full_data[prop] = value.text
+                all_components[port_name] = port_full_data
     else:
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
     return json.dumps(all_components, separators=(',', ':'))
@@ -531,20 +580,41 @@ if __name__ == '__main__':
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true', help='Making discovery')
-    parser.add_argument('-g', '--get', '--health', type=str, help='ID of MSA part which status we want to get',
-                        metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|all]')
+    parser.add_argument('-g', '--get-health', type=str, help='ID of MSA part which status we want to get',
+                        metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|full]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
-    parser.add_argument('-f', '--loginfile', type=str, help='Path to file contains login and password')
+    parser.add_argument('-f', '--login-file', type=str, help='Path to file contains login and password')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of MSA', metavar='[IP|DNSNAME]')
-    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
-                        help='MSA component name.', metavar='[disks|vdisks|controllers|enclosures]')
+    parser.add_argument('-c', '--component', type=str, help='MSA part name.',
+                        choices=['disks', 'vdisks', 'controllers', 'enclosures',
+                                 'fans', 'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes'])
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
-    parser.add_argument('-s', '--savexml', type=str, help='Save response from storage as XML')
-    parser.add_argument('--showcache', action='store_true', help='Display cache data')
+    parser.add_argument('-s', '--save-xml', type=str, help='Save response from storage as XML')
+    parser.add_argument('--show-cache', action='store_true', help='Display cache data')
     parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
                         metavar='[direct|verify]')
     args = parser.parse_args()
+
+    # Marches between CLI 'show' command args and OBJECT 'name' attribute in XML output.
+    NAMES_MATCH = {
+        'disks': 'drive',
+        'vdisks': 'virtual-disk',
+        'controllers': 'controllers',
+        'enclosures': 'enclosures',
+        'power-supplies': 'power-supplies',
+        'fans': 'fan-details',
+        'ports': 'ports',
+        'pools': 'pools',
+        'disk-groups': 'disk-group',
+        'volumes': 'volume'
+    }
+
+    LLD_MACROS = {
+        'pools': ["{#POOL.ID}", "{#POOL.TYPE}"],
+        'vdisks': ["{#VDISK.ID}", "{#VDISK.TYPE}"],
+        'disk-groups': ["{#DG.ID}", "{#DG.TYPE}"]
+    }
 
     # Create cache table if it not exists
     CACHE_DB = prepare_tmp() + 'zbx-hpmsa.cache.db'
@@ -558,7 +628,7 @@ if __name__ == '__main__':
                'PRIMARY KEY (dns_name, ip, proto))')
 
     # Display cache data and exit
-    if args.showcache:
+    if args.show_cache:
         print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('hostname', 'ip', 'proto', 'expired', 'sessionkey'))
         print("{:-^30} {:-^15} {:-^7} {:-^19} {:-^32}".format('-', '-', '-', '-', '-'))
         for cache in sql_op('SELECT * FROM skey_cache', fetch_all=True):
@@ -568,16 +638,16 @@ if __name__ == '__main__':
         exit(0)
 
     # Set msa_connect - IP or DNS name and determine to use https or not
-    USE_HTTPS = args.https in ['direct', 'verify']
+    USE_HTTPS = args.https in ('direct', 'verify')
     VERIFY_SSL = args.https == 'verify'
     MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
-    if args.discovery and args.get:
+    if args.discovery and args.get_health:
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Make login hash string
-    if args.loginfile:
+    if args.login_file:
         CRED_HASH = make_pwd_hash(args.loginfile, isfile=True)
     else:
         CRED_HASH = make_pwd_hash('_'.join([args.user, args.password]))
@@ -589,10 +659,10 @@ if __name__ == '__main__':
     if args.discovery:
         print(make_discovery(MSA_CONNECT, args.component, skey))
     # Getting health
-    elif args.get and args.get != 'all':
-        print(get_health(MSA_CONNECT, args.component, args.get, skey))
+    elif args.get_health and args.get_health != 'full':
+        print(get_health(MSA_CONNECT, args.component, args.get_health, skey))
     # Making bulk request for all possible component statuses
-    elif args.get == 'all':
+    elif args.get_health == 'full':
         print(get_full_data(MSA_CONNECT, args.component, skey))
     else:
         raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
