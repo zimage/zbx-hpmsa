@@ -291,33 +291,33 @@ def make_discovery(storage, component, sessionkey):
                     "{#DISK.SN}": "{}".format(disk_sn)
                 }
                 all_components.append(lld_dict)
-        # elif component == 'vdisks':
-        #     for vdisk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-        #         vdisk_id = vdisk.find("./PROPERTY[@name='name']").text
-        #         vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
-        #         lld_dict = {
-        #             "{#VDISK.ID}": "{}".format(vdisk_id),
-        #             "{#VDISK.TYPE}": "{}".format(vdisk_type)
-        #         }
-        #         all_components.append(lld_dict)
-        elif component in ['pools', 'vdisks', 'disk-groups']:
-            for PROP in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-                comp_id = PROP.find("./PROPERTY[@name='name']").text
-                comp_type = PROP.find("./PROPERTY[@name='storage-type']").text
-                # lld_dict = {
-                #     "{#POOL.ID}": "{}".format(pool_id),
-                #     "{#POOL.TYPE}": "{}".format(pool_type)
-                # }
-                all_components.append(dict(zip(LLD_MACROS[component], [comp_id, comp_type])))
-        # elif component == 'disk-groups':
-        #     for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
-        #         dg_id = pool.find("./PROPERTY[@name='name']").text
-        #         dg_type = pool.find("./PROPERTY[@name='storage-type']").text
-        #         lld_dict = {
-        #             "{#DG.ID}": "{}".format(dg_id),
-        #             "{#DG.TYPE}": "{}".format(dg_type)
-        #         }
-        #         all_components.append(lld_dict)
+        elif component == 'vdisks':
+            for vdisk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                vdisk_id = vdisk.find("./PROPERTY[@name='name']").text
+                vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
+                lld_dict = {
+                    "{#VDISK.ID}": "{}".format(vdisk_id),
+                    "{#VDISK.TYPE}": "{}".format(vdisk_type)
+                }
+                all_components.append(lld_dict)
+        elif component == 'pools':
+            for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                pool_id = pool.find("./PROPERTY[@name='name']").text
+                pool_type = pool.find("./PROPERTY[@name='storage-type']").text
+                lld_dict = {
+                    "{#POOL.ID}": "{}".format(pool_id),
+                    "{#POOL.TYPE}": "{}".format(pool_type)
+                }
+                all_components.append(lld_dict)
+        elif component == 'disk-groups':
+            for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+                dg_id = pool.find("./PROPERTY[@name='name']").text
+                dg_type = pool.find("./PROPERTY[@name='storage-type']").text
+                lld_dict = {
+                    "{#DG.ID}": "{}".format(dg_id),
+                    "{#DG.TYPE}": "{}".format(dg_type)
+                }
+                all_components.append(lld_dict)
         elif component == 'volumes':
             for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
                 volume_id = pool.find("./PROPERTY[@name='volume-name']").text
@@ -608,12 +608,6 @@ if __name__ == '__main__':
         'pools': 'pools',
         'disk-groups': 'disk-group',
         'volumes': 'volume'
-    }
-
-    LLD_MACROS = {
-        'pools': ["{#POOL.ID}", "{#POOL.TYPE}"],
-        'vdisks': ["{#VDISK.ID}", "{#VDISK.TYPE}"],
-        'disk-groups': ["{#DG.ID}", "{#DG.TYPE}"]
     }
 
     # Create cache table if it not exists
