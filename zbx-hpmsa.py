@@ -236,7 +236,7 @@ def get_health(storage, component, item, sessionkey):
     :param item: Component ID.
     :type item: str
     :return: Health status.
-    :rtype: int
+    :rtype: str
     """
 
     # Forming url
