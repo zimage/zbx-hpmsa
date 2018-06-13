@@ -40,26 +40,20 @@ def make_pwd_hash(cred, isfile=False):
     return hashed
 
 
-def prepare_tmp():
+def prepare_tmp(path):
     """
-    Check access rights and existence of temporary directory.
+    Create temporary directory for cache.
 
-    :return: Path to temporary directory.
-    :rtype: str
+    :param path: Path to temporary directory
+    :return: None
+    :rtype: None
     """
 
-    if os.name == 'posix':
-        tmp_dir = '/dev/shm/zbx-hpmsa/'
-        run_user = os.getenv('USER')
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-            os.chmod(tmp_dir, 0o777)
-        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
-            raise SystemExit("ERROR: '{}' not writable for user '{}'.".format(tmp_dir, run_user))
-    else:
-        # Current dir for Windows.
-        tmp_dir = ''
-    return tmp_dir
+    try:
+        os.makedirs(path)
+        os.chmod(path, 0o777)
+    except PermissionError:
+        raise SystemExit("ERROR: '{}' not writable for user '{}'.".format(tmp_dir, os.getenv('USER')))
 
 
 def sql_cmd(query, fetch_all=False):
@@ -275,7 +269,7 @@ def get_health(storage, component, item, sessionkey):
 
 def make_lld(storage, component, sessionkey):
     """
-    Forms LLD JSON for Zabbix server.
+    Form LLD JSON for Zabbix server.
 
     :param storage: Storage DNS name or IP address.
     :type storage: str
@@ -655,11 +649,11 @@ if __name__ == '__main__':
     parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http')
     args = parser.parse_args()
 
-    # Make no possible to use '--discovery' and '--get' options together
+    # Make no possible to use '--lld' and '--get' options together
     if args.lld and args.get_health:
-        raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
+        raise SystemExit("Syntax error: Cannot use '-d|--lld' and '-g|--get' options together.")
 
-    # Marches between CLI 'show' command args and OBJECT 'name' attribute in XML output.
+    # Matches between CLI 'show' command args and OBJECT 'name' attribute in XML output.
     NAMES_MATCH = {
         'disks': 'drive',
         'vdisks': 'virtual-disk',
@@ -673,8 +667,17 @@ if __name__ == '__main__':
         'volumes': 'volume'
     }
 
-    # Create cache table if it not exists
-    CACHE_DB = prepare_tmp() + 'zbx-hpmsa.cache.db'
+    # Prepare tmp directory if it doesn't exists
+    if os.name == 'posix':
+        tmp_dir = '/dev/shm/zbx-hpmsa/'
+        if not os.path.exists(tmp_dir):
+            prepare_tmp(tmp_dir)
+    else:
+        # Current directory for Windows.
+        tmp_dir = ''
+
+    # Create cache db if it not exists
+    CACHE_DB = tmp_dir + 'zbx-hpmsa.cache.db'
     if not os.path.exists(CACHE_DB):
         sql_cmd('CREATE TABLE IF NOT EXISTS skey_cache ('
                 'dns_name TEXT NOT NULL, '
