@@ -236,7 +236,7 @@ def get_health(storage, component, item, sessionkey):
     :param item: Component ID.
     :type item: str
     :return: Health status.
-    :rtype: str
+    :rtype: int
     """
 
     # Forming url
@@ -258,13 +258,13 @@ def get_health(storage, component, item, sessionkey):
 
     # Returns health statuses
     if component in ('vdisks', 'disks'):
-        health = xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health']".format(NAMES_MATCH[component])).text
+        health = xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health-numeric']".format(NAMES_MATCH[component])).text
     else:
         # We'll make dict {ctrl_id: health} because of we cannot call API for exact of some components
         health_dict = {}
         for OBJ in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             comp_id = OBJ.find("./PROPERTY[@name='{}']".format(id_md[component])).text
-            health_dict[comp_id] = OBJ.find("./PROPERTY[@name='health']").text
+            health_dict[comp_id] = OBJ.find("./PROPERTY[@name='health-numeric']").text
         # If given item presents in our dict - return status
         if item in health_dict:
             health = health_dict[item]
