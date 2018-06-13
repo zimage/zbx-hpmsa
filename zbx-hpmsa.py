@@ -15,13 +15,14 @@ import requests
 
 def make_pwd_hash(cred, isfile=False):
     """
-    The function makes md5 hash of login string.
-    :param cred:
-    str: Login string in 'user_password' format or path to the file with credentials.
-    :param isfile:
-    bool: Is string the file path.
-    :return:
-    str: md5 hash
+    Return md5 hash of login string.
+
+    :param cred: Login string in 'user_password' format or path to the file with credentials.
+    :type cred: str
+    :param isfile: Is the 'cred' is path to file.
+    :type isfile: bool
+    :return: md5 hash.
+    :rtype: str
     """
 
     if isfile:
@@ -41,9 +42,10 @@ def make_pwd_hash(cred, isfile=False):
 
 def prepare_tmp():
     """
-    The function check access rights and existence of temporary dir.
-    :return:
-    str() Temporary disk path.
+    Check access rights and existence of temporary directory.
+
+    :return: Path to temporary directory.
+    :rtype: str
     """
 
     if os.name == 'posix':
@@ -51,24 +53,25 @@ def prepare_tmp():
         run_user = os.getenv('USER')
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
-            os.chmod(tmp_dir, 0o770)
+            os.chmod(tmp_dir, 0o777)
         elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
             raise SystemExit("ERROR: '{}' not writable for user '{}'.".format(tmp_dir, run_user))
     else:
-        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
+        # Current dir for Windows. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
         tmp_dir = ''
     return tmp_dir
 
 
-def sql_op(query, fetch_all=False):
+def sql_cmd(query, fetch_all=False):
     """
-    The function works with SQL backend.
-    :param query:
-    str: SQL query to execute.
-    :param fetch_all:
-    bool: Set it True to execute fetchall().
-    :return:
-    None
+    Check and execute SQL query.
+
+    :param query: SQL query to execute.
+    :type query: str
+    :param fetch_all: Set it True to execute fetchall().
+    :type fetch_all: bool
+    :return: Tuple with SQL query result.
+    :rtype: tuple
     """
 
     if not any(verb.lower() in query.lower() for verb in ['DROP', 'DELETE', 'TRUNCATE', 'ALTER']):
@@ -86,6 +89,7 @@ def sql_op(query, fetch_all=False):
                 raise SystemExit('ERROR: {}. Query: {}'.format(e, query))
         conn.commit()
         conn.close()
+
         return data
     else:
         raise SystemExit('ERROR: Unacceptable SQL query: "{query}"'.format(query=query))
@@ -93,15 +97,16 @@ def sql_op(query, fetch_all=False):
 
 def get_skey(storage, hashed_login, use_cache=True):
     """
-    Get's session key from HP MSA API.
-    :param storage:
-    str: Storage IP address or DNS name.
-    :param hashed_login:
-    str: Hashed with md5 login data.
-    :param use_cache:
-    bool: The function will try to save session key to disk.
-    :return:
-    str: Session key or error code.
+    Get session key from HP MSA API and and print it.
+
+    :param storage: Storage IP address or DNS name.
+    :type storage: str
+    :param hashed_login: Hashed with md5 login data.
+    :type hashed_login: str
+    :param use_cache: The function will try to save session key to disk.
+    :type use_cache: bool
+    :return: Session key or error code.
+    :rtype: str
     """
 
     msa_ip = gethostbyname(storage)
@@ -110,11 +115,11 @@ def get_skey(storage, hashed_login, use_cache=True):
     if use_cache:
         cur_timestamp = datetime.timestamp(datetime.utcnow())
         if not USE_HTTPS:  # http
-            cache_data = sql_op('SELECT expired,skey FROM skey_cache WHERE ip="{}" AND proto="http"'.format(storage))
+            cache_data = sql_cmd('SELECT expired,skey FROM skey_cache WHERE ip="{}" AND proto="http"'.format(storage))
         else:  # https
-            cache_data = sql_op('SELECT expired,skey '
-                                'FROM skey_cache '
-                                'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip))
+            cache_data = sql_cmd('SELECT expired,skey '
+                                 'FROM skey_cache '
+                                 'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip))
         if cache_data is not None:
             cache_expired, cached_skey = cache_data
             if cur_timestamp < float(cache_expired):
@@ -132,25 +137,31 @@ def get_skey(storage, hashed_login, use_cache=True):
         if return_code == '1':
             expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=15))
             if not USE_HTTPS:  # http
-                if sql_op('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage)) is None:
-                    sql_op('INSERT INTO skey_cache VALUES ('
-                           '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage, ip=storage,
-                                                                                 time=expired_time, skey=sessionkey))
+                if sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage)) is None:
+                    sql_cmd('INSERT INTO skey_cache VALUES ('
+                            '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage,
+                                                                                  ip=storage,
+                                                                                  time=expired_time,
+                                                                                  skey=sessionkey))
                 else:
-                    sql_op('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
-                           'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey, expired=expired_time, ip=storage))
+                    sql_cmd('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
+                            'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey,
+                                                                      expired=expired_time,
+                                                                      ip=storage))
             else:  # https
-                if sql_op('SELECT dns_name, ip FROM skey_cache '
-                          'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip)) is None:
-                    sql_op('INSERT INTO skey_cache VALUES ('
-                           '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage, ip=msa_ip,
-                                                                                      expired=expired_time,
-                                                                                      skey=sessionkey))
+                if sql_cmd('SELECT dns_name, ip FROM skey_cache '
+                           'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip)) is None:
+                    sql_cmd('INSERT INTO skey_cache VALUES ('
+                            '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
+                                                                                       ip=msa_ip,
+                                                                                       expired=expired_time,
+                                                                                       skey=sessionkey))
                 else:
-                    sql_op('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
-                           'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
-                                                                                            expired=expired_time,
-                                                                                            name=storage, ip=msa_ip))
+                    sql_cmd('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
+                            'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
+                                                                                             expired=expired_time,
+                                                                                             name=storage,
+                                                                                             ip=msa_ip))
             return sessionkey
         # 2 - Authentication Unsuccessful, return "2"
         elif return_code == '2':
@@ -159,13 +170,14 @@ def get_skey(storage, hashed_login, use_cache=True):
 
 def query_xmlapi(url, sessionkey):
     """
-    Making HTTP request to HP MSA XML API and returns it's response as 3-element tuple.
-    :param url:
-    str: URL to make GET request.
-    :param sessionkey:
-    str: Session key to authorize.
-    :return:
-    tuple: Tuple with str() return code, str() return description and etree object <xml.etree.ElementTree.Element>.
+    Making HTTP(s) request to HP MSA XML API.
+
+    :param url: URL to make GET request.
+    :type url: str
+    :param sessionkey: Session key to authorize.
+    :type sessionkey: Union[str, None]
+    :return: Tuple with return code, return description and etree object <xml.etree.ElementTree.Element>.
+    :rtype: tuple
     """
 
     # Set file where we can find root CA
@@ -207,45 +219,44 @@ def query_xmlapi(url, sessionkey):
 
 def get_health(storage, component, item, sessionkey):
     """
-    The function gets single item of MSA component. E.g. - status of one disk.
-    :param storage:
-    str: Storage DNS name or it's IP address.
-    :param sessionkey:
-    str: Session key, which must be attach to the request header.
-    :param component:
-    str: Name of storage component, what we want to get - vdisks, disks, etc.
-    :param item:
-    str: ID number of getting component - number of disk, name of vdisk, etc.
-    :return:
-    str: HTTP response text.
+    Get health status of single MSA part.
+
+    :param storage: Storage DNS name or IP address.
+    :type storage: str
+    :param sessionkey: Session key.
+    :type sessionkey: str
+    :param component: Storage component name.
+    :type component: str
+    :param item: Component ID.
+    :type item: str
+    :return: Health status.
+    :rtype: str
     """
 
+    # Forming url
     if component in ('vdisks', 'disks'):
-        get_url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
-    elif component in ('controllers', 'enclosures', 'power-supplies', 'fans', 'ports'):
-        get_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+        url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
     else:
-        raise SystemExit('ERROR: Wrong component "{}"'.format(component))
+        url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
-    resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
-    if resp_return_code != '0':
-        raise SystemExit('ERROR: {} : {}'.format(resp_return_code, resp_description))
+    # Querying API
+    return_code, description, xml = query_xmlapi(url, sessionkey)
+    if return_code != '0':
+        raise SystemExit('ERROR: {} : {}'.format(return_code, description))
 
-    # ID Matching dict
-    id_md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'power-supplies': 'durable-id',
-             'fans': 'durable-id', 'ports': 'port', 'fan-details': 'durable-id'
-             }
+    # Components ID matching dict.
+    id_md = {
+        'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'power-supplies': 'durable-id',
+        'fans': 'durable-id', 'pools': 'name', 'disk-groups': 'name', 'ports': 'port', 'volumes': 'volume-name'
+        }
 
     # Returns health statuses
     if component in ('vdisks', 'disks'):
-        try:
-            health = resp_xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health']".format(NAMES_MATCH[component])).text
-        except AttributeError:
-            raise SystemExit("ERROR: No such id: '{}'".format(item))
-    elif component in ('controllers', 'enclosures', 'power-supplies', 'fans', 'ports'):
-        # We'll make dict {ctrl_id: health} because of we cannot call API for exact controller status
+        health = xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health']".format(NAMES_MATCH[component])).text
+    else:
+        # We'll make dict {ctrl_id: health} because of we cannot call API for exact of some components
         health_dict = {}
-        for OBJ in resp_xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
+        for OBJ in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             comp_id = OBJ.find("./PROPERTY[@name='{}']".format(id_md[component])).text
             health_dict[comp_id] = OBJ.find("./PROPERTY[@name='health']").text
         # If given item presents in our dict - return status
@@ -253,21 +264,21 @@ def get_health(storage, component, item, sessionkey):
             health = health_dict[item]
         else:
             raise SystemExit("ERROR: No such id: '{}'.".format(item))
-    else:
-        raise SystemExit("ERROR: Wrong component '{}'".format(component))
     return health
 
 
-def make_discovery(storage, component, sessionkey):
+def make_lld(storage, component, sessionkey):
     """
-    :param storage:
-    str: Storage DNS name or it's IP address.
-    :param sessionkey:
-    str: Session key, which must be attach to the request header.
-    :param component:
-    str: Name of storage component, what we want to get - vdisks, disks, etc.
-    :return:
-    str: JSON with discovery data.
+    Forms LLD JSON for Zabbix server.
+
+    :param storage: Storage DNS name or IP address.
+    :type storage: str
+    :param sessionkey: Session key.
+    :type sessionkey: str
+    :param component: Name of storage component.
+    :type component: str
+    :return: JSON with discovery data.
+    :rtype: str
     """
 
     # Forming URL
@@ -384,14 +395,16 @@ def make_discovery(storage, component, sessionkey):
 
 def get_full_json(storage, component, sessionkey):
     """
-    :param storage:
-    str: Storage DNS name or it's IP address.
-    :param sessionkey:
-    str: Session key, which must be attach to the request header.
-    :param component:
-    str: Name of storage component, what we want to get - vdisks, disks, etc.
-    :return:
-    str: JSON with all found data. For example:
+    Form text in JSON with storage component data.
+
+    :param storage: Storage DNS name or IP address.
+    :type storage: str
+    :param sessionkey: Session key.
+    :type sessionkey: str
+    :param component: Name of storage component.
+    :type component: str
+    :return: JSON with all found data.
+    :rtype: str
     """
 
     # Forming URL
@@ -622,22 +635,25 @@ if __name__ == '__main__':
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
-    parser.add_argument('-d', '--discovery', action='store_true', help='Making discovery')
+    parser.add_argument('-d', '--lld', action='store_true', help='Making discovery')
     parser.add_argument('-g', '--get-health', type=str, help='ID of MSA part which status we want to get',
-                        metavar='[DISKID|VDISKNAME|CONTROLLERID|ENCLOSUREID|full]')
+                        metavar='[ID|full]')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-f', '--login-file', type=str, help='Path to file contains login and password')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of MSA', metavar='[IP|DNSNAME]')
-    parser.add_argument('-c', '--component', type=str, help='MSA part name.',
-                        choices=['disks', 'vdisks', 'controllers', 'enclosures',
-                                 'fans', 'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes'])
+    parser.add_argument('-c', '--component', type=str, help='MSA part name',
+                        choices=['disks', 'vdisks', 'controllers', 'enclosures', 'fans', 'power-supplies', 'ports',
+                                 'pools', 'disk-groups', 'volumes'])
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     parser.add_argument('-s', '--save-xml', type=str, help='Save response from storage as XML')
     parser.add_argument('--show-cache', action='store_true', help='Display cache data')
-    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
-                        metavar='[direct|verify]')
+    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http')
     args = parser.parse_args()
+
+    # Make no possible to use '--discovery' and '--get' options together
+    if args.lld and args.get_health:
+        raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Marches between CLI 'show' command args and OBJECT 'name' attribute in XML output.
     NAMES_MATCH = {
@@ -656,19 +672,19 @@ if __name__ == '__main__':
     # Create cache table if it not exists
     CACHE_DB = prepare_tmp() + 'zbx-hpmsa.cache.db'
     if not os.path.exists(CACHE_DB):
-        sql_op('CREATE TABLE IF NOT EXISTS skey_cache ('
-               'dns_name TEXT NOT NULL, '
-               'ip TEXT NOT NULL, '
-               'proto TEXT NOT NULL, '
-               'expired TEXT NOT NULL, '
-               'skey TEXT NOT NULL DEFAULT 0, '
-               'PRIMARY KEY (dns_name, ip, proto))')
+        sql_cmd('CREATE TABLE IF NOT EXISTS skey_cache ('
+                'dns_name TEXT NOT NULL, '
+                'ip TEXT NOT NULL, '
+                'proto TEXT NOT NULL, '
+                'expired TEXT NOT NULL, '
+                'skey TEXT NOT NULL DEFAULT 0, '
+                'PRIMARY KEY (dns_name, ip, proto))')
 
     # Display cache data and exit
     if args.show_cache:
         print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('hostname', 'ip', 'proto', 'expired', 'sessionkey'))
         print("{:-^30} {:-^15} {:-^7} {:-^19} {:-^32}".format('-', '-', '-', '-', '-'))
-        for cache in sql_op('SELECT * FROM skey_cache', fetch_all=True):
+        for cache in sql_cmd('SELECT * FROM skey_cache', fetch_all=True):
             name, ip, proto, expired, skey = cache
             print("{:30} {:15} {:^7} {:19} {:32}".format(
                 name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), skey))
@@ -678,10 +694,6 @@ if __name__ == '__main__':
     USE_HTTPS = args.https in ('direct', 'verify')
     VERIFY_SSL = args.https == 'verify'
     MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
-
-    # Make no possible to use '--discovery' and '--get' options together
-    if args.discovery and args.get_health:
-        raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Make login hash string
     if args.login_file:
@@ -693,13 +705,13 @@ if __name__ == '__main__':
     skey = get_skey(MSA_CONNECT, CRED_HASH)
 
     # Make discovery
-    if args.discovery:
-        print(make_discovery(MSA_CONNECT, args.component, skey))
-    # Getting health
-    elif args.get_health and args.get_health != 'full':
+    if args.lld:
+        print(make_lld(MSA_CONNECT, args.component, skey))
+    # Getting health of one MSA component
+    elif args.get_health and args.get_health not in ('all', 'full'):
         print(get_health(MSA_CONNECT, args.component, args.get_health, skey))
-    # Making bulk request for all possible component statuses
-    elif args.get_health == 'full':
+    # Getting full components data in JSON
+    elif args.get_health in ('all', 'full'):
         print(get_full_json(MSA_CONNECT, args.component, skey))
     else:
         raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
