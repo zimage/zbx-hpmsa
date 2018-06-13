@@ -26,14 +26,14 @@ def make_pwd_hash(cred, isfile=False):
     """
 
     if isfile:
-        if os.path.exists(cred):
+        try:
             with open(cred, 'r') as login_file:
                 login_data = login_file.readline().replace('\n', '').strip()
                 if login_data.find('_') != -1:
                     hashed = md5(login_data.encode()).hexdigest()
                 else:
                     hashed = login_data
-        else:
+        except FileNotFoundError:
             raise SystemExit("ERROR: File password doesn't exists: {}".format(cred))
     else:
         hashed = md5(cred.encode()).hexdigest()
@@ -57,7 +57,7 @@ def prepare_tmp():
         elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
             raise SystemExit("ERROR: '{}' not writable for user '{}'.".format(tmp_dir, run_user))
     else:
-        # Current dir for Windows. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
+        # Current dir for Windows.
         tmp_dir = ''
     return tmp_dir
 
@@ -74,7 +74,7 @@ def sql_cmd(query, fetch_all=False):
     :rtype: tuple
     """
 
-    if not any(verb.lower() in query.lower() for verb in ['DROP', 'DELETE', 'TRUNCATE', 'ALTER']):
+    if not any(verb.lower() in query.lower() for verb in ('DROP', 'DELETE', 'TRUNCATE', 'ALTER')):
         conn = sqlite3.connect(CACHE_DB)
         cursor = conn.cursor()
         try:
@@ -109,6 +109,7 @@ def get_skey(storage, hashed_login, use_cache=True):
     :rtype: str
     """
 
+    # Get MSA IP from name
     msa_ip = gethostbyname(storage)
 
     # Trying to use cached session key
@@ -119,7 +120,8 @@ def get_skey(storage, hashed_login, use_cache=True):
         else:  # https
             cache_data = sql_cmd('SELECT expired,skey '
                                  'FROM skey_cache '
-                                 'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip))
+                                 'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip)
+                                 )
         if cache_data is not None:
             cache_expired, cached_skey = cache_data
             if cur_timestamp < float(cache_expired):
@@ -142,12 +144,14 @@ def get_skey(storage, hashed_login, use_cache=True):
                             '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage,
                                                                                   ip=storage,
                                                                                   time=expired_time,
-                                                                                  skey=sessionkey))
+                                                                                  skey=sessionkey)
+                            )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
                             'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey,
                                                                       expired=expired_time,
-                                                                      ip=storage))
+                                                                      ip=storage)
+                            )
             else:  # https
                 if sql_cmd('SELECT dns_name, ip FROM skey_cache '
                            'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip)) is None:
@@ -155,13 +159,15 @@ def get_skey(storage, hashed_login, use_cache=True):
                             '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
                                                                                        ip=msa_ip,
                                                                                        expired=expired_time,
-                                                                                       skey=sessionkey))
+                                                                                       skey=sessionkey)
+                            )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
                             'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
                                                                                              expired=expired_time,
                                                                                              name=storage,
-                                                                                             ip=msa_ip))
+                                                                                             ip=msa_ip)
+                            )
             return sessionkey
         # 2 - Authentication Unsuccessful, return "2"
         elif return_code == '2':
@@ -181,7 +187,7 @@ def query_xmlapi(url, sessionkey):
     """
 
     # Set file where we can find root CA
-    ca_file = '/etc/ssl/certs/ca-bundle.crt'
+    ca_file = '/etc/pki/tls/certs/ca-bundle.crt'
 
     # Makes GET request to URL
     try:
@@ -248,7 +254,7 @@ def get_health(storage, component, item, sessionkey):
     id_md = {
         'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'power-supplies': 'durable-id',
         'fans': 'durable-id', 'pools': 'name', 'disk-groups': 'name', 'ports': 'port', 'volumes': 'volume-name'
-        }
+    }
 
     # Returns health statuses
     if component in ('vdisks', 'disks'):
@@ -624,8 +630,6 @@ def get_full_json(storage, component, sessionkey):
                     if value is not None:
                         port_full_data[prop] = value.text
                 all_components[port_name] = port_full_data
-    else:
-        raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
     return json.dumps(all_components, separators=(',', ':'))
 
 
@@ -678,7 +682,8 @@ if __name__ == '__main__':
                 'proto TEXT NOT NULL, '
                 'expired TEXT NOT NULL, '
                 'skey TEXT NOT NULL DEFAULT 0, '
-                'PRIMARY KEY (dns_name, ip, proto))')
+                'PRIMARY KEY (dns_name, ip, proto))'
+                )
 
     # Display cache data and exit
     if args.show_cache:
@@ -714,4 +719,4 @@ if __name__ == '__main__':
     elif args.get_health in ('all', 'full'):
         print(get_full_json(MSA_CONNECT, args.component, skey))
     else:
-        raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
+        raise SystemExit("Syntax error: You must use '--lld' or '--get' option anyway.")
