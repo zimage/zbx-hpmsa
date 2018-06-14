@@ -11,11 +11,11 @@ Program wrote with Python 3.6, but works with Python 3.4 from EPEL.
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
 
 ## v0.4.x vs v0.5
-Be careful - v0.5 broke compatibility with earlier version by parameter names, you cannot use it with old template.
+Be careful - v0.5 broke compatibility with earlier version by parameter names, you cannot use it with old template.  
 E.g. I've renamed some long options:
 - '--discovery' => '--lld'
 - '--showcache' => '--show-cache'
-- '--loginfile' => '--login-file'
+- '--loginfile' => '--login-file'  
 Also, full JSON returned with '-g all|full' parameter was changed and extended in v0.5, so check if you using it.
 New attached template has no LLD rule for virtual disks, because of it was removed in new API versions (since MSA 2050) and replaced with 'disk-groups'.
 zbx-hpmsa still can found and check 'vdisks', but you must add this rule to template manually.
@@ -53,21 +53,21 @@ HPE MSA DNS name or IP address.
 Sets MSA username  
 **-p|--password**  
 Sets password for MSA user  
-**-f|--login-file**
+**-f|--login-file**  
 Path to file with login and password data  
-**-d|--lld**
+**-d|--lld**  
 Enables discovery mode.  
 **-c|--component**  
 Sets component to request.  
-**-g|--get-health**
+**-g|--get-health**  
 Get component health status.  
 **-v|--version**  
-Print script version and exit.  
+Print script version and exit.    
 **--https [verify|direct]**  
 Using HTTPS instead HTTP.  
-**--show-cache**
+**--show-cache**  
 Print cache content and exit.  
-**--save-xml**
+**--save-xml**  
 Save API response text to a xml.file. Accept path to some file as argument.
 
 
@@ -95,10 +95,10 @@ OK
 It's useful for dependent items. This feature will be fully usable with LLD in Zabbix 4.0 (ZBX-4200), but now you must create all items manually.
 
 ## Zabbix templates
-In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment and build your own template based on it.
-Template using LLD functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP protocol enabled.
-Also it expects what MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' or '-l|--login-file' options.
-If you want to use HTTPS, you must correct template and be sure what {HOST.CONN} macro contains FQDN. By the way, look at relevant Wiki page for HTTPS support.
+In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment and build your own template based on it.  
+Template using LLD functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP protocol enabled.  
+Also it expects what MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' or '-l|--login-file' options.  
+If you want to use HTTPS, you must correct template and be sure what {HOST.CONN} macro contains FQDN. By the way, look at relevant Wiki page for HTTPS support.  
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
