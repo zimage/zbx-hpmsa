@@ -1,14 +1,25 @@
 # zbx-hpmsa
-Zabbix module for monitor HPE MSA storages via XML API.  
+Utility for get statuses of HPE MSA storage components via XML API.
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with Telegram: @asand3r
 
-zbx-hpmsa provides possibility to make Low Level Discovery of HPE MSA storage components via it's XML API. Also it can get health status of discovered component.  
-Program wrote with Python 3.6, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
+zbx-hpmsa provides possibility to make Low Level Discovery (LLD) of HPE MSA storage components via it's XML API and retrieve many of some other metrics like health statuses, temperature etc.
+Program wrote with Python 3.6, but works with Python 3.4 from EPEL.
 
-**Latest stable version:** 0.4.1
+**Latest stable versions:** 0.4.1, 0.5
 
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
+
+## v0.4.x vs v0.5
+Be careful - v0.5 broke compatibility with earlier version by parameter names, you cannot use it with old template.
+E.g. I've renamed some long options:
+- '--discovery' => '--lld'
+- '--showcache' => '--show-cache'
+- '--loginfile' => '--login-file'
+Also, full JSON returned with '-g all|full' parameter was changed and extended in v0.5, so check if you using it.
+New attached template has no LLD rule for virtual disks, because of it was removed in new API versions (since MSA 2050) and replaced with 'disk-groups'.
+zbx-hpmsa still can found and check 'vdisks', but you must add this rule to template manually.
+
 
 ## Dependencies
  - requests
@@ -20,21 +31,20 @@ __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hp
  - [x] HTTPS support
  - [x] Login cache (SQLite3)
 
-**Low Level Discovery:**
- - [x] physical disks 
- - [x] virtual disks
- - [x] controllers
+**LLD, health check and full data in JSON:**
+ - [x] Physical disks
+ - [x] Virtual disks
+ - [x] Controllers
  - [x] Enclosures
-
-**Component status:**
- - [x] physical disks 
- - [x] virtual disks
- - [x] controllers
- - [x] Enclosures
+ - [x] Ports
+ - [x] Pools
+ - [x] Disk groups
+ - [x] Power supplies
+ - [x] Fans
+ - [x] Volumes
 
 ## TODO  
 - [ ] Add correct processing of round-robin DNS records
-- [ ] Template file generation for using with bulk request (until ZBXNEXT-4200 will be done)
 
 ## Supported arguments  
 **-m|--msa**  
@@ -43,22 +53,22 @@ HPE MSA DNS name or IP address.
 Sets MSA username  
 **-p|--password**  
 Sets password for MSA user  
-**-f|--loginfile**  
+**-f|--login-file**
 Path to file with login and password data  
-**-d|--discovery**  
+**-d|--lld**
 Enables discovery mode.  
 **-c|--component**  
 Sets component to request.  
-**-g|--get|--health**  
+**-g|--get-health**
 Get component health status.  
 **-v|--version**  
 Print script version and exit.  
 **--https [verify|direct]**  
 Using HTTPS instead HTTP.  
-**--showcache**  
+**--show-cache**
 Print cache content and exit.  
-**--savexml**  
-Save API response text to a xml.file. Accepts path to some file.
+**--save-xml**
+Save API response text to a xml.file. Accept path to some file as argument.
 
 
 ## Usage
@@ -75,20 +85,20 @@ You can find more examples on Wiki page, but I placed some cases here too.
 
 OK
 ```
-- Bulk request to get all available data. E.g. all disks or controller 'A':
+- Request to get all available data in JSON. E.g. all disks or controller 'A':
 ```bash
-[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all
-{"1.1":{"health":"OK","temperature":"25","work_hours":"21170"},"1.2":{"health":"OK","temperature":"24","work_hours":"21168"}, ...}
-[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component controllers --get all
-{"A":{"health":"OK","cf_health":"OK","ports":{"A1":{"health":"OK","status":"Up","sfp_status":"OK"},"A2":{"health":"OK","status":"Up","sfp_status":"OK"},"A3":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"},"A4":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"}}},"B":{"health":"OK","cf_health":"OK","ports":{"B1":{"health":"OK","status":"Up","sfp_status":"OK"},"B2":{"health":"OK","status":"Up","sfp_status":"OK"},"B3":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"},"B4":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"}}}}
+[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get-health full
+{"1.1":{"health":"OK","health-num":"0","error":"0","temperature":"25","power-on-hours":"26094"}, ... }
+[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component controllers --get-health full
+{"A":{"health":"OK","health-num":"0","status":"Operational","status-num":"0","redundancy":"Redundant","redundancy-num":"2","flash-health":"OK","flash-health-num":"0","flash-status":"Installed","flash-status-num":"1"}, ... }
 ```
+It's useful for dependent items. This feature will be fully usable with LLD in Zabbix 4.0 (ZBX-4200), but now you must create all items manually.
 
 ## Zabbix templates
-In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment. It's using Low Level Discovery functionality
-and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' options. Also it using HTTP and you must enable it or add '--https' to each script call in the template. You can check it it command line:
-```bash 
-[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all --user FOO --password BAR
-```  
+In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment and build your own template based on it.
+Template using LLD functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP protocol enabled.
+Also it expects what MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' or '-l|--login-file' options.
+If you want to use HTTPS, you must correct template and be sure what {HOST.CONN} macro contains FQDN. By the way, look at relevant Wiki page for HTTPS support.
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
