@@ -138,13 +138,15 @@ def get_skey(storage, hashed_login, use_cache=True):
                             '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage,
                                                                                   ip=storage,
                                                                                   time=expired_time,
-                                                                                  skey=sessionkey)
+                                                                                  skey=sessionkey
+                                                                                  )
                             )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
                             'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey,
                                                                       expired=expired_time,
-                                                                      ip=storage)
+                                                                      ip=storage
+                                                                      )
                             )
             else:  # https
                 if sql_cmd('SELECT dns_name, ip FROM skey_cache '
@@ -153,14 +155,16 @@ def get_skey(storage, hashed_login, use_cache=True):
                             '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
                                                                                        ip=msa_ip,
                                                                                        expired=expired_time,
-                                                                                       skey=sessionkey)
+                                                                                       skey=sessionkey
+                                                                                       )
                             )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
                             'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
                                                                                              expired=expired_time,
                                                                                              name=storage,
-                                                                                             ip=msa_ip)
+                                                                                             ip=msa_ip
+                                                                                             )
                             )
             return sessionkey
         # 2 - Authentication Unsuccessful, return "2"
@@ -635,18 +639,21 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--lld', action='store_true', help='Making discovery')
     parser.add_argument('-g', '--get-health', type=str, help='ID of MSA part which status we want to get',
-                        metavar='[ID|full]')
+                        metavar='[ID|[all|full]]'
+                        )
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-f', '--login-file', type=str, help='Path to file contains login and password')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of MSA', metavar='[IP|DNSNAME]')
     parser.add_argument('-c', '--component', type=str, help='MSA part name',
-                        choices=['disks', 'vdisks', 'controllers', 'enclosures', 'fans', 'power-supplies', 'ports',
-                                 'pools', 'disk-groups', 'volumes'])
+                        choices=('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
+                                 'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes'
+                                 )
+                        )
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     parser.add_argument('-s', '--save-xml', type=str, help='Save response from storage as XML')
     parser.add_argument('--show-cache', action='store_true', help='Display cache data')
-    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http')
+    parser.add_argument('--https', type=str, choices=('direct', 'verify'), help='Use https instead http')
     args = parser.parse_args()
 
     # Make no possible to use '--lld' and '--get' options together
