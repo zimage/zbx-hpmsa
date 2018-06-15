@@ -1,5 +1,5 @@
 # zbx-hpmsa
-Utility for get statuses of HPE MSA storage components via XML API.
+Utility for get statuses of HPE MSA storage components via XML API.  
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with Telegram: @asand3r
 
