@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>3.4</version>
-    <date>2018-06-14T12:18:42Z</date>
+    <date>2018-06-15T09:46:57Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -93,9 +93,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>icmpping[{#CONTROLLER.IP},2]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -135,9 +135,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>net.tcp.service[http,{#CONTROLLER.IP},80]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -177,9 +177,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CONTROLLER.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -222,7 +222,7 @@ Health shatuses in most cases:&#13;
                             <name>Controller {#CONTROLLER.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} with SN {#CONTROLLER.SN} and IP {#CONTROLLER.IP} health status is {ITEM.LASTVALUE}.</description>
@@ -243,7 +243,7 @@ Health shatuses in most cases:&#13;
                             <name>Controller {#CONTROLLER.ID} ping failed</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} doesn't responce on ping.</description>
@@ -264,7 +264,7 @@ Health shatuses in most cases:&#13;
                             <name>Web interface on controller {#CONTROLLER.ID} ({#CONTROLLER.IP}) is down</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>1</priority>
                             <description>Cannot connect to controller {#CONTROLLER.ID} web interface.</description>
@@ -327,9 +327,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;{#DG.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -378,7 +378,7 @@ Health shatuses in most cases:&#13;
                             <name>Disk group {#DG.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Disk group {#DG.ID} health status in {ITEM.LASTVALUE}.</description>
@@ -435,9 +435,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISK.ID}&quot;]</key>
-                            <delay>5m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_5M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -486,7 +486,7 @@ Health shatuses in most cases:&#13;
                             <name>Physical disk in slot {#DISK.ID} is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Physical disk in slot {#DISK.ID} with SN {#DISK.SN} has status {ITEM.LASTVALUE}.</description>
@@ -543,9 +543,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSURE.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -594,7 +594,7 @@ Health shatuses in most cases:&#13;
                             <name>Enclosure {#ENCLOSURE.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Enclosure {#ENCLOSURE.ID} with SN {#ENCLOSURE.SN} health status is {ITEM.LASTVALUE}.</description>
@@ -651,9 +651,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;fans&quot;, &quot;-g&quot;, &quot;{#FAN.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -702,7 +702,7 @@ Health shatuses in most cases:&#13;
                             <name>Fan {#FAN.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Fan {#FAN.ID} in {#FAN.LOCATION} health status is {ITEM.LASTVALUE}.</description>
@@ -759,9 +759,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;, &quot;-g&quot;, &quot;{#POOL.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -810,7 +810,7 @@ Health shatuses in most cases:&#13;
                             <name>Pool {#POOL.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Pool {#POOL.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -874,9 +874,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;ports&quot;, &quot;-g&quot;, &quot;{#PORT.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -925,7 +925,7 @@ Health shatuses in most cases:&#13;
                             <name>Port {#PORT.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Port {#PORT.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -982,9 +982,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;power-supplies&quot;, &quot;-g&quot;, &quot;{#POWERSUPPLY.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -1033,7 +1033,7 @@ Health shatuses in most cases:&#13;
                             <name>Power supply {#POWERSUPPLY.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Power supply {#POWERSUPPLY.ID} in {#POWERSUPPLY.LOCATION} health status is {ITEM.LASTVALUE}.</description>
@@ -1097,9 +1097,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;, &quot;-g&quot;, &quot;{#VOLUME.ID}&quot;]</key>
-                            <delay>1m</delay>
-                            <history>14d</history>
-                            <trends>180d</trends>
+                            <delay>{$MSA_UPDATE_1M}</delay>
+                            <history>{$MSA_HISTORY}</history>
+                            <trends>{$MSA_TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -1148,7 +1148,7 @@ Health shatuses in most cases:&#13;
                             <name>Volume {#VOLUME.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url/>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Volume {#VOLUME.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -1171,12 +1171,20 @@ Health shatuses in most cases:&#13;
             <httptests/>
             <macros>
                 <macro>
-                    <macro>{$MSAPASS}</macro>
-                    <value>!monitor</value>
+                    <macro>{$MSA_HISTORY}</macro>
+                    <value>14d</value>
                 </macro>
                 <macro>
-                    <macro>{$MSAUSER}</macro>
-                    <value>monitor</value>
+                    <macro>{$MSA_TRENDS}</macro>
+                    <value>180d</value>
+                </macro>
+                <macro>
+                    <macro>{$MSA_UPDATE_1M}</macro>
+                    <value>1m</value>
+                </macro>
+                <macro>
+                    <macro>{$MSA_UPDATE_5M}</macro>
+                    <value>5m</value>
                 </macro>
             </macros>
             <templates/>
