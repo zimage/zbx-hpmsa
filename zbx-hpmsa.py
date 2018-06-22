@@ -712,7 +712,7 @@ if __name__ == '__main__':
 
     # Make login hash string
     if args.login_file:
-        CRED_HASH = make_pwd_hash(args.loginfile, isfile=True)
+        CRED_HASH = make_pwd_hash(args.login_file, isfile=True)
     else:
         CRED_HASH = make_pwd_hash('_'.join([args.user, args.password]))
 
