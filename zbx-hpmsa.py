@@ -189,20 +189,24 @@ def query_xmlapi(url, sessionkey):
 
     # Makes GET request to URL
     try:
-        if not USE_HTTPS:  # http
-            url = 'http://' + url
-            response = requests.get(url, headers={'sessionKey': sessionkey})
-        else:  # https
+        # Connection timeout in seconds (connection, read).
+        timeout = (1, 3)
+        if USE_HTTPS:  # https
             url = 'https://' + url
             if VERIFY_SSL:
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
+                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file, timeout=timeout)
             else:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False)
+                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False, timeout=timeout)
+        else:  # http
+            url = 'http://' + url
+            response = requests.get(url, headers={'sessionKey': sessionkey}, timeout=timeout)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
-    except requests.exceptions.ConnectionError:
-        raise SystemExit("ERROR: Cannot connect to storage.")
+    except requests.exceptions.ConnectTimeout:
+        raise SystemExit('ERROR: Timeout occurred!')
+    except requests.exceptions.ConnectionError as e:
+        raise SystemExit("ERROR: Cannot connect to storage {}.".format(e))
 
     # Reading data from server XML response
     try:
@@ -633,7 +637,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.5'
+    VERSION = '0.5.2'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
