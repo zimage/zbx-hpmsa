@@ -369,11 +369,14 @@ def make_lld(storage, component, sessionkey):
         for PS in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             ps_id = PS.find("./PROPERTY[@name='durable-id']").text
             ps_loc = PS.find("./PROPERTY[@name='location']").text
-            lld_dict = {
-                "{#POWERSUPPLY.ID}": "{}".format(ps_id),
-                "{#POWERSUPPLY.LOCATION}": "{}".format(ps_loc)
-            }
-            all_components.append(lld_dict)
+            ps_name = PS.find("./PROPERTY[@name='name']").text
+            # Exclude voltage regulators from discovery
+            if ps_name.lower().find('voltage regulator') == -1:
+                lld_dict = {
+                    "{#POWERSUPPLY.ID}": "{}".format(ps_id),
+                    "{#POWERSUPPLY.LOCATION}": "{}".format(ps_loc)
+                }
+                all_components.append(lld_dict)
     elif component == 'fans':
         for FAN in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             fan_id = FAN.find("./PROPERTY[@name='durable-id']").text
@@ -637,7 +640,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.5.2'
+    VERSION = '0.5.3'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
