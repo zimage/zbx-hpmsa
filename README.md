@@ -6,7 +6,7 @@ Also you can contact me with Telegram: @asand3r
 zbx-hpmsa provides possibility to make Low Level Discovery (LLD) of HPE MSA storage components via it's XML API and retrieve many of some other metrics like health statuses, temperature etc.
 Program wrote with Python 3.6, but works with Python 3.4 from EPEL.
 
-**Latest stable versions:** 0.4.1, 0.5.2
+**Latest stable versions:** 0.4.1, 0.5.4
 
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
 
@@ -95,10 +95,11 @@ OK
 It's useful for dependent items. This feature will be fully usable with LLD in Zabbix 4.0 (ZBX-4200), but now you must create all items manually.
 
 ## Zabbix templates
-In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment and build your own template based on it.  
-Template using LLD functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP protocol enabled.  
+In addition I've attached preconfigured Zabbix Templates here, so you can use them in your environment and build your own template based on it.  
+Templates using LLD functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP protocol enabled.  
 Also it expects what MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' or '-l|--login-file' options.  
 If you want to use HTTPS, you must correct template and be sure what {HOST.CONN} macro contains FQDN. By the way, look at relevant Wiki page for HTTPS support.  
+From version v0.5.4 I've attached two new templates for Zabbix 4.0, which using dependent items functionality and can retrieve much more metrics from storage than earlier versions. Check Wiki to read more about it.  
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
