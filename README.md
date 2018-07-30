@@ -99,7 +99,7 @@ In addition I've attached preconfigured Zabbix Templates here, so you can use th
 Templates using LLD functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP protocol enabled.  
 Also it expects what MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' or '-l|--login-file' options.  
 If you want to use HTTPS, you must correct template and be sure what {HOST.CONN} macro contains FQDN. By the way, look at relevant Wiki page for HTTPS support.  
-Started with version v0.5.4 I've attached two new templates for Zabbix 4.0, which using dependent items functionality and can retrieve much more metrics from storage than earlier versions. Check Wiki to read more about it.  
+Started with version v0.5.4 I've attached two new templates for Zabbix 4.0, which using dependent items functionality and can retrieve much more metrics from storage than earlier versions. Check [Wiki](https://github.com/asand3r/zbx-hpmsa/wiki/Zabbix-4.0-Templates) to read more about it.  
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
