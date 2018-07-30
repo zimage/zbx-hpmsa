@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.0</version>
-    <date>2018-07-30T09:03:03Z</date>
+    <date>2018-07-30T09:14:31Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -2224,7 +2224,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:msa.disk[&quot;{#DISK.ID}&quot;,&quot;power-on-hours&quot;].avg(#3)}&gt;43800</expression>
+                            <expression>{Template HPE MSA 1040-2040 Plus:msa.disk[&quot;{#DISK.ID}&quot;,&quot;power-on-hours&quot;].avg(#3)}&gt;{$MSA_DISK_POWER_ON_HOURS}</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk {#DISK.ID} summary work time too big ({ITEM.LASTVALUE} hours)</name>
@@ -4543,6 +4543,10 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                 <macro>
                     <macro>{$HISTORY}</macro>
                     <value>14d</value>
+                </macro>
+                <macro>
+                    <macro>{$MSA_DISK_POWER_ON_HOURS}</macro>
+                    <value>43800</value>
                 </macro>
                 <macro>
                     <macro>{$TRENDS}</macro>
