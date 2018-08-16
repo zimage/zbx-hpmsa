@@ -457,14 +457,18 @@ def get_full_json(storage, component, sessionkey):
             vdisk_status = PROP.find("./PROPERTY[@name='status']").text
             vdisk_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
             vdisk_owner = PROP.find("./PROPERTY[@name='owner']").text
+            vdisk_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             vdisk_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            vdisk_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             vdisk_full_data = {
                 "health": vdisk_health,
                 "health-num": vdisk_health_num,
                 "status": vdisk_status,
                 "status-num": vdisk_status_num,
                 "owner": vdisk_owner,
-                "owner-pref": vdisk_owner_pref
+                "owner-num": vdisk_owner_num,
+                "owner-pref": vdisk_owner_pref,
+                "owner-pref-num": vdisk_owner_pref_num
             }
             all_components[vdisk_name] = vdisk_full_data
     elif component == 'pools':
@@ -473,12 +477,16 @@ def get_full_json(storage, component, sessionkey):
             pool_health = PROP.find("./PROPERTY[@name='health']").text
             pool_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             pool_owner = PROP.find("./PROPERTY[@name='owner']").text
+            pool_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             pool_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            pool_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             pool_full_data = {
                 "health": pool_health,
                 "health-num": pool_health_num,
                 "owner": pool_owner,
-                "owner-pref": pool_owner_pref
+                "owner-num": pool_owner_num,
+                "owner-pref": pool_owner_pref,
+                "owner-pref-num": pool_owner_pref_num
             }
             all_components[pool_name] = pool_full_data
     elif component == 'disk-groups':
@@ -489,14 +497,18 @@ def get_full_json(storage, component, sessionkey):
             dg_status = PROP.find("./PROPERTY[@name='status']").text
             dg_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
             dg_owner = PROP.find("./PROPERTY[@name='owner']").text
+            dg_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             dg_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            dg_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             dg_full_data = {
                 "health": dg_health,
                 "health-num": dg_health_num,
                 "status": dg_status,
                 "status-num": dg_status_num,
                 "owner": dg_owner,
-                "owner-pref": dg_owner_pref
+                "owner-num": dg_owner_num,
+                "owner-pref": dg_owner_pref,
+                "owner-pref-num": dg_owner_pref_num
             }
             all_components[dg_name] = dg_full_data
     elif component == 'volumes':
@@ -505,12 +517,16 @@ def get_full_json(storage, component, sessionkey):
             volume_health = PROP.find("./PROPERTY[@name='health']").text
             volume_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             volume_owner = PROP.find("./PROPERTY[@name='owner']").text
+            volume_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             volume_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            volume_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             volume_full_data = {
                 "health": volume_health,
                 "health-num": volume_health_num,
                 "owner": volume_owner,
-                "owner-pref": volume_owner_pref
+                "owner-num": volume_owner_num,
+                "owner-pref": volume_owner_pref,
+                "owner-pref-num": volume_owner_pref_num
             }
             all_components[volume_name] = volume_full_data
     elif component == 'controllers':
@@ -523,6 +539,18 @@ def get_full_json(storage, component, sessionkey):
             ctrl_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
             ctrl_rd_status = PROP.find("./PROPERTY[@name='redundancy-status']").text
             ctrl_rd_status_num = PROP.find("./PROPERTY[@name='redundancy-status-numeric']").text
+
+            # Get controller statistics
+            url = '{strg}/api/show/{comp}'.format(strg=storage, comp='controller-statistics')
+
+            # Making request to API
+            return_code, description, stats_xml = query_xmlapi(url, sessionkey)
+            if return_code != '0':
+                raise SystemExit('ERROR: {} : {}'.format(return_code, description))
+
+            ctrl_cpu_load = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='cpu-load']").text
+            ctrl_iops = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='iops']").text
+
             # Making full controller dict
             ctrl_full_data = {
                 "health": ctrl_health,
@@ -530,7 +558,9 @@ def get_full_json(storage, component, sessionkey):
                 "status": ctrl_status,
                 "status-num": ctrl_status_num,
                 "redundancy": ctrl_rd_status,
-                "redundancy-num": ctrl_rd_status_num
+                "redundancy-num": ctrl_rd_status_num,
+                "cpu-load": ctrl_cpu_load,
+                "iops": ctrl_iops
             }
 
             # Processing advanced controller properties
@@ -640,7 +670,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.5.4'
+    VERSION = '0.5.5'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
