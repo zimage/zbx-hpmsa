@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.0</version>
-    <date>2018-07-30T08:49:16Z</date>
+    <date>2018-08-16T10:58:03Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -11,7 +11,8 @@
         <template>
             <template>Template HPE MSA 1040-2040 Plus</template>
             <name>Template HPE MSA 1040-2040 Plus</name>
-            <description>Monitor HPE MSA storages models1040/2040+ (not for use with P2000G3 and lower).</description>
+            <description>Monitor HPE MSA storages models1040/2040+ (not for use with P2000G3 and lower).&#13;
+The template excludes some char items, which dublicates by numeric ones.</description>
             <groups>
                 <group>
                     <name>Templates</name>
@@ -888,16 +889,16 @@
                             <master_item/>
                         </item_prototype>
                         <item_prototype>
-                            <name>Controller {#CONTROLLER.ID} flash card health status</name>
+                            <name>Controller {#CONTROLLER.ID} CPU Load, %</name>
                             <type>18</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;flash-health&quot;]</key>
+                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;cpu-load&quot;]</key>
                             <delay>0</delay>
                             <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
+                            <trends>{$TRENDS}</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
                             <allowed_hosts/>
                             <units/>
                             <snmpv3_contextname/>
@@ -915,15 +916,17 @@
                             <publickey/>
                             <privatekey/>
                             <port/>
-                            <description>MSA controller {#CONTROLLER.ID} flash card health status (string)</description>
+                            <description>MSA controller {#CONTROLLER.ID} CPU load in percent.</description>
                             <inventory_link>0</inventory_link>
                             <applications/>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Controller redundancy</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing>
                                 <step>
                                     <type>12</type>
-                                    <params>$['{#CONTROLLER.ID}']['flash-health']</params>
+                                    <params>$['{#CONTROLLER.ID}']['cpu-load']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -1024,73 +1027,6 @@
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Controller {#CONTROLLER.ID} flash card status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;flash-status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>MSA controller {#CONTROLLER.ID} flash card operational status (string)</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#CONTROLLER.ID}']['flash-status']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Controller {#CONTROLLER.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Controller {#CONTROLLER.ID} flash card status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -1129,73 +1065,6 @@
                                 <step>
                                     <type>12</type>
                                     <params>$['{#CONTROLLER.ID}']['flash-status-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Controller {#CONTROLLER.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Controller {#CONTROLLER.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>MSA controller {#CONTROLLER.ID} health status (string)</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#CONTROLLER.ID}']['health']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -1296,16 +1165,16 @@
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Controller {#CONTROLLER.ID} redundancy status</name>
+                            <name>Controller {#CONTROLLER.ID} IOPS</name>
                             <type>18</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;redundancy&quot;]</key>
+                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;iops&quot;]</key>
                             <delay>0</delay>
                             <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
+                            <trends>{$TRENDS}</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
                             <allowed_hosts/>
                             <units/>
                             <snmpv3_contextname/>
@@ -1323,15 +1192,17 @@
                             <publickey/>
                             <privatekey/>
                             <port/>
-                            <description>MSA controller {#CONTROLLER.ID} redundancy status (string)</description>
+                            <description>MSA controller {#CONTROLLER.ID} IOPS count.</description>
                             <inventory_link>0</inventory_link>
                             <applications/>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Controller redundancy</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing>
                                 <step>
                                     <type>12</type>
-                                    <params>$['{#CONTROLLER.ID}']['redundancy']</params>
+                                    <params>$['{#CONTROLLER.ID}']['iops']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -1444,74 +1315,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Controller {#CONTROLLER.ID} operational status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>MSA controller {#CONTROLLER.ID} operational status (string)</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#CONTROLLER.ID}']['status']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Controller {#CONTROLLER.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Controller {#CONTROLLER.ID} status, numeric</name>
+                            <name>Controller {#CONTROLLER.ID} operational status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
                             <snmp_oid/>
@@ -1849,75 +1653,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <description>Discovery all HPE MSA disk groups.</description>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Disk group {#DG.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.dg[&quot;{#DG.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Disk group {#DG.ID} with type {#DG.TYPE} health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap>
-                                <name>HPE MSA Common Health</name>
-                            </valuemap>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#DG.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Disk group {#DG.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Disk group {#DG.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -1954,73 +1689,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#DG.ID}']['health-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Disk group {#DG.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Disk group {#DG.ID} current owner</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.dg[&quot;{#DG.ID}&quot;,&quot;owner&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Disk group {#DG.ID} with type {#DG.TYPE} owner.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#DG.ID}']['owner']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -2121,73 +1789,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Disk group {#DG.ID} preferred owner</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.dg[&quot;{#DG.ID}&quot;,&quot;owner-pref&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Disk group {#DG.ID} with type {#DG.TYPE} preferred owner.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#DG.ID}']['owner-pref']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Disk group {#DG.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Disk group {#DG.ID} preferred owner, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -2226,75 +1827,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#DG.ID}']['owner-pref-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Disk group {#DG.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Disk group {#DG.ID} operational status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.dg[&quot;{#DG.ID}&quot;,&quot;status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Disk group {#DG.ID} with type {#DG.TYPE} operational status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap>
-                                <name>HPE MSA Common Health</name>
-                            </valuemap>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#DG.ID}']['status']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -2583,75 +2115,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Physical diks {#DISK.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.disk[&quot;{#DISK.ID}&quot;,&quot;health &quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Health health status of physical disk {#DISK.ID} with SN {#DISK.SN}.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap>
-                                <name>HPE MSA Common Health</name>
-                            </valuemap>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#DISK.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Disk {#DISK.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Physical diks {#DISK.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -2899,7 +2362,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:msa.disk[&quot;{#DISK.ID}&quot;,&quot;power-on-hours&quot;].avg(#3)}&gt;43800</expression>
+                            <expression>{Template HPE MSA 1040-2040 Plus:msa.disk[&quot;{#DISK.ID}&quot;,&quot;power-on-hours&quot;].avg(#3)}&gt;{$MSA_DISK_POWER_ON_HOURS}</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk {#DISK.ID} summary work time too big ({ITEM.LASTVALUE} hours)</name>
@@ -2995,75 +2458,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <description>Discovery all HPE MSA enclosures.</description>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Enclosure {#ENCLOSURE.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.encl[&quot;{#ENCLOSURE.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Enclosure {#ENCLOSURE.ID} with SN {#ENCLOSURE.SN} health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap>
-                                <name>HPE MSA Common Health</name>
-                            </valuemap>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#ENCLOSURE.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Enclosure {#ENCLOSURE.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Enclosure {#ENCLOSURE.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -3102,73 +2496,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#ENCLOSURE.ID}']['health-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Enclosure {#ENCLOSURE.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Enclosure {#ENCLOSURE.ID} operational status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.encl[&quot;{#ENCLOSURE.ID}&quot;,&quot;status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Enclosure {#ENCLOSURE.ID} with SN {#ENCLOSURE.SN} operational status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#ENCLOSURE.ID}']['status']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -3367,75 +2694,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <description>Discovery all HPE MSA fans.</description>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Fan {#FAN.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.fan[&quot;{#FAN.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Fan {#FAN.ID} in location &quot;{#FAN.LOCATION}&quot; health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap>
-                                <name>HPE MSA Common Health</name>
-                            </valuemap>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#FAN.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Fan {#FAN.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;fans&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Fan {#FAN.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -3541,73 +2799,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#FAN.ID}']['speed']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Fan {#FAN.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;fans&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Fan {#FAN.ID} operational status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.fan[&quot;{#FAN.ID}&quot;,&quot;status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Fan {#FAN.ID} in location &quot;{#FAN.LOCATION}&quot; operational status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#FAN.ID}']['status']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -3827,73 +3018,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <description>Discovery all HPE MSA pools.</description>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Pool {#POOL.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.pool[&quot;{#POOL.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Pool {#POOL.ID} with type {#POOL.TYPE} health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#POOL.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Pool {#POOL.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Pool {#POOL.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -3963,73 +3087,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Pool {#POOL.ID} current owner</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.pool[&quot;{#POOL.ID}&quot;,&quot;owner&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Pool {#POOL.ID} with type {#POOL.TYPE} owner.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#POOL.ID}']['owner']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Pool {#POOL.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Pool {#POOL.ID} current owner, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -4068,73 +3125,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#POOL.ID}']['owner-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Pool {#POOL.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Pool {#POOL.ID} preferred owner</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.pool[&quot;{#POOL.ID}&quot;,&quot;owner-pref&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Pool {#POOL.ID} with type {#POOL.TYPE} preferred owner.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#POOL.ID}']['owner-pref']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -4340,73 +3330,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <description>Discovery all HPE MSA ports.</description>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Port {#PORT.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.port[&quot;{#PORT.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Port {#PORT.ID} ({#PORT.SPEED}) with type {#PORT.TYPE} health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#PORT.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Port {#PORT.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;ports&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Port {#PORT.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -4445,73 +3368,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#PORT.ID}']['health-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Port {#PORT.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;ports&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Port {#PORT.ID} operational status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.port[&quot;{#PORT.ID}&quot;,&quot;port-status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Port {#PORT.ID} ({#PORT.SPEED}) with type {#PORT.TYPE} operational status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#PORT.ID}']['port-status']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -4799,73 +3655,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <lifetime>1d</lifetime>
                     <description>Discovery all HPE MSA power supplies.</description>
                     <item_prototypes>
-                        <item_prototype>
-                            <name>Power supply {#POWERSUPPLY.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Power supply {#POWERSUPPLY.ID} in location &quot;{#POWERSUPPLY.LOCATION}&quot; health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#POWERSUPPLY.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Power Supply Unit {#POWERSUPPLY.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;power-supplies&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
                         <item_prototype>
                             <name>Power supply {#POWERSUPPLY.ID} health status, numeric</name>
                             <type>18</type>
@@ -5271,75 +4060,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Power supply {#POWERSUPPLY.ID} operational status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;status&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Power supply {#POWERSUPPLY.ID} in location &quot;{#POWERSUPPLY.LOCATION}&quot; operational status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap>
-                                <name>HPE MSA Common Health</name>
-                            </valuemap>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#POWERSUPPLY.ID}']['status']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Power Supply Unit {#POWERSUPPLY.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;power-supplies&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Power supply {#POWERSUPPLY.ID} operational status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -5683,73 +4403,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     <description>Discovery all HPE MSA volumes.</description>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Volume {#VOLUME.ID} health status</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;health&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Volume {#VOLUME.ID} with type {#VOLUME.TYPE} health status.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#VOLUME.ID}']['health']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Volume {#VOLUME.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Volume {#VOLUME.ID} health status, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -5819,73 +4472,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Volume {#VOLUME.ID} current owner</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;owner&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Volume {#VOLUME.ID} with type {#VOLUME.TYPE} current owner.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#VOLUME.ID}']['owner']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Volume {#VOLUME.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
                             <name>Volume {#VOLUME.ID} current owner, numeric</name>
                             <type>18</type>
                             <snmp_community/>
@@ -5924,73 +4510,6 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                 <step>
                                     <type>12</type>
                                     <params>$['{#VOLUME.ID}']['owner-num']</params>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>1</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes>
-                                <application_prototype>
-                                    <name>MSA Volume {#VOLUME.ID}</name>
-                                </application_prototype>
-                            </application_prototypes>
-                            <master_item>
-                                <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;, &quot;-g&quot;, &quot;full&quot;]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Volume {#VOLUME.ID} preferred owner</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;owner-pref&quot;]</key>
-                            <delay>0</delay>
-                            <history>{$HISTORY}</history>
-                            <trends>0</trends>
-                            <status>1</status>
-                            <value_type>1</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description>Volume {#VOLUME.ID} with type {#VOLUME.TYPE} preferred owner.</description>
-                            <inventory_link>0</inventory_link>
-                            <applications/>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$['{#VOLUME.ID}']['owner-pref']</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -6162,6 +4681,10 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                 <macro>
                     <macro>{$HISTORY}</macro>
                     <value>14d</value>
+                </macro>
+                <macro>
+                    <macro>{$MSA_DISK_POWER_ON_HOURS}</macro>
+                    <value>43800</value>
                 </macro>
                 <macro>
                     <macro>{$TRENDS}</macro>

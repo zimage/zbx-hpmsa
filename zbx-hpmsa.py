@@ -127,10 +127,10 @@ def get_skey(storage, hashed_login, use_cache=True):
     else:
         # Forming URL and trying to make GET query
         login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=hashed_login)
-        return_code, sessionkey, xml_data = query_xmlapi(url=login_url, sessionkey=None)
+        ret_code, sessionkey, xml = query_xmlapi(url=login_url, sessionkey=None)
 
         # 1 - success, write sessionkey to DB and return it
-        if return_code == '1':
+        if ret_code == '1':
             expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=15))
             if not USE_HTTPS:  # http
                 if sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage)) is None:
@@ -168,8 +168,8 @@ def get_skey(storage, hashed_login, use_cache=True):
                             )
             return sessionkey
         # 2 - Authentication Unsuccessful, return "2"
-        elif return_code == '2':
-            return return_code
+        elif ret_code == '2':
+            return ret_code
 
 
 def query_xmlapi(url, sessionkey):
@@ -210,9 +210,9 @@ def query_xmlapi(url, sessionkey):
 
     # Reading data from server XML response
     try:
-        if args.save_xml is not None and 'login' not in url:
+        if SAVE_XML is not None and 'login' not in url:
             try:
-                with open(args.save_xml, 'w') as xml_file:
+                with open(SAVE_XML, 'w') as xml_file:
                     xml_file.write(response.text)
             except PermissionError:
                     raise SystemExit('ERROR: Cannot save XML file to "{}"'.format(args.savexml))
@@ -248,9 +248,9 @@ def get_health(storage, component, item, sessionkey):
         url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Querying API
-    return_code, description, xml = query_xmlapi(url, sessionkey)
-    if return_code != '0':
-        raise SystemExit('ERROR: {} : {}'.format(return_code, description))
+    ret_code, descr, xml = query_xmlapi(url, sessionkey)
+    if ret_code != '0':
+        raise SystemExit('ERROR: {} : {}'.format(ret_code, descr))
 
     # Components ID matching dict.
     id_md = {
@@ -457,14 +457,18 @@ def get_full_json(storage, component, sessionkey):
             vdisk_status = PROP.find("./PROPERTY[@name='status']").text
             vdisk_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
             vdisk_owner = PROP.find("./PROPERTY[@name='owner']").text
+            vdisk_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             vdisk_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            vdisk_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             vdisk_full_data = {
                 "health": vdisk_health,
                 "health-num": vdisk_health_num,
                 "status": vdisk_status,
                 "status-num": vdisk_status_num,
                 "owner": vdisk_owner,
-                "owner-pref": vdisk_owner_pref
+                "owner-num": vdisk_owner_num,
+                "owner-pref": vdisk_owner_pref,
+                "owner-pref-num": vdisk_owner_pref_num
             }
             all_components[vdisk_name] = vdisk_full_data
     elif component == 'pools':
@@ -473,12 +477,16 @@ def get_full_json(storage, component, sessionkey):
             pool_health = PROP.find("./PROPERTY[@name='health']").text
             pool_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             pool_owner = PROP.find("./PROPERTY[@name='owner']").text
+            pool_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             pool_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            pool_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             pool_full_data = {
                 "health": pool_health,
                 "health-num": pool_health_num,
                 "owner": pool_owner,
-                "owner-pref": pool_owner_pref
+                "owner-num": pool_owner_num,
+                "owner-pref": pool_owner_pref,
+                "owner-pref-num": pool_owner_pref_num
             }
             all_components[pool_name] = pool_full_data
     elif component == 'disk-groups':
@@ -489,14 +497,18 @@ def get_full_json(storage, component, sessionkey):
             dg_status = PROP.find("./PROPERTY[@name='status']").text
             dg_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
             dg_owner = PROP.find("./PROPERTY[@name='owner']").text
+            dg_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             dg_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            dg_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             dg_full_data = {
                 "health": dg_health,
                 "health-num": dg_health_num,
                 "status": dg_status,
                 "status-num": dg_status_num,
                 "owner": dg_owner,
-                "owner-pref": dg_owner_pref
+                "owner-num": dg_owner_num,
+                "owner-pref": dg_owner_pref,
+                "owner-pref-num": dg_owner_pref_num
             }
             all_components[dg_name] = dg_full_data
     elif component == 'volumes':
@@ -505,12 +517,16 @@ def get_full_json(storage, component, sessionkey):
             volume_health = PROP.find("./PROPERTY[@name='health']").text
             volume_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             volume_owner = PROP.find("./PROPERTY[@name='owner']").text
+            volume_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             volume_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
+            volume_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
             volume_full_data = {
                 "health": volume_health,
                 "health-num": volume_health_num,
                 "owner": volume_owner,
-                "owner-pref": volume_owner_pref
+                "owner-num": volume_owner_num,
+                "owner-pref": volume_owner_pref,
+                "owner-pref-num": volume_owner_pref_num
             }
             all_components[volume_name] = volume_full_data
     elif component == 'controllers':
@@ -523,6 +539,19 @@ def get_full_json(storage, component, sessionkey):
             ctrl_status_num = PROP.find("./PROPERTY[@name='status-numeric']").text
             ctrl_rd_status = PROP.find("./PROPERTY[@name='redundancy-status']").text
             ctrl_rd_status_num = PROP.find("./PROPERTY[@name='redundancy-status-numeric']").text
+
+            # Get controller statistics
+            url = '{strg}/api/show/{comp}'.format(strg=storage, comp='controller-statistics')
+
+            # Making request to API
+            stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
+            if stats_ret_code != '0':
+                raise SystemExit('ERROR: {} : {}'.format(stats_ret_code, stats_descr))
+
+            # THINK: I don't know, is it good solution, but it's one more query to XML API
+            ctrl_cpu_load = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='cpu-load']").text
+            ctrl_iops = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='iops']").text
+
             # Making full controller dict
             ctrl_full_data = {
                 "health": ctrl_health,
@@ -530,7 +559,9 @@ def get_full_json(storage, component, sessionkey):
                 "status": ctrl_status,
                 "status-num": ctrl_status_num,
                 "redundancy": ctrl_rd_status,
-                "redundancy-num": ctrl_rd_status_num
+                "redundancy-num": ctrl_rd_status_num,
+                "cpu-load": ctrl_cpu_load,
+                "iops": ctrl_iops
             }
 
             # Processing advanced controller properties
@@ -640,7 +671,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.5.4'
+    VERSION = '0.5.5'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
@@ -658,7 +689,7 @@ if __name__ == '__main__':
                                  )
                         )
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
-    parser.add_argument('-s', '--save-xml', type=str, help='Save response from storage as XML')
+    parser.add_argument('-s', '--save-xml', type=str, nargs=1, help='Save response from storage as XML file')
     parser.add_argument('--show-cache', action='store_true', help='Display cache data')
     parser.add_argument('--https', type=str, choices=('direct', 'verify'), help='Use https instead http')
     args = parser.parse_args()
@@ -682,12 +713,12 @@ if __name__ == '__main__':
     }
 
     # Prepare tmp directory if it doesn't exists
-    if os.name == 'posix':
+    if os.name == 'posix':  # REMOVE: v0.6.
         tmp_dir = '/dev/shm/zbx-hpmsa/'
         if not os.path.exists(tmp_dir):
             prepare_tmp(tmp_dir)
     else:
-        # Current directory for Windows.
+        # REMOVE: v0.6. Current directory for Windows.
         tmp_dir = ''
 
     # Create cache db if it not exists
@@ -712,9 +743,11 @@ if __name__ == '__main__':
                 name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), skey))
         exit(0)
 
-    # Set msa_connect - IP or DNS name and determine to use https or not
+    # Set some global variables
+    SAVE_XML = args.save_xml
     USE_HTTPS = args.https in ('direct', 'verify')
     VERIFY_SSL = args.https == 'verify'
+    # Set msa_connect - IP or DNS name and determine to use https or not
     MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
 
     # Make login hash string
