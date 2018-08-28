@@ -45,6 +45,7 @@ zbx-hpmsa still can found and check 'vdisks', but you must add this rule to temp
 
 ## TODO  
 - [ ] Add correct processing of round-robin DNS records
+- [ ] Add 'install' command to make some preparations before works  
 
 ## Supported arguments  
 **-m|--msa**  
