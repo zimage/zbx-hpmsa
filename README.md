@@ -6,7 +6,7 @@ Also you can contact me with Telegram: @asand3r
 zbx-hpmsa provides possibility to make Low Level Discovery (LLD) of HPE MSA storage components via it's XML API and retrieve many of some other metrics like health statuses, temperature etc.
 Program wrote with Python 3.6, but works with Python 3.4 from EPEL.
 
-**Latest stable versions:** 0.4.1, 0.5.4
+**Latest stable versions:** 0.4.1, 0.5.5
 
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
 
@@ -45,6 +45,7 @@ zbx-hpmsa still can found and check 'vdisks', but you must add this rule to temp
 
 ## TODO  
 - [ ] Add correct processing of round-robin DNS records
+- [ ] Add 'install' argument for main script
 
 ## Supported arguments  
 **-m|--msa**  
