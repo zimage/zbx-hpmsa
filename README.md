@@ -15,17 +15,18 @@ Hi, everyone. =)
 Yeap, I made it again and broke compatibility between versions. Sorry. =) Actually, I've increased version number not because of new functionalilty but because of new syntax. Hope, it's good desition and will be more comfortable in usage.  
 Unlike previous versions, where we have one-level arguments for whole program, in v0.6 I've added five main positional arguments with their own parameter list:
  - lld
- > Still do Low-Level Discovery tasks for list of HPE MSA parts
+ > Still do Low-Level Discovery tasks for list of HPE MSA parts.
  - full
- > Retrieves all important (in my opinion) metrics from MSA in JSON object
+ > Retrieves all important (in my opinion) metrics from MSA in JSON object.
  - health
- > Shows health status for one MSA part, like controller, disk, disk-group etc (this option will be removed in v0.7 I think)
+ > Shows health status for one MSA part, like controller, disk, disk-group etc (this option will be removed in v0.7 I think).
  - install
  > Executes some preparation tasks, like creating directory for cache db with all needed privileges.
  > It must be executed one time before utility usage.
  - cache
- > Here we check our cache and drop it, if we want
- Every command have own help (--help), so I'll not describe it here. Nevertheless, you should look at new examples and the relevant wiki page. Oh, one more - '--https' option was renamed to '--ssl' like more short variant (we've saved two chars!). =)
+ > Here we check our cache and drop it, if we want.
+
+Every command have own help (--help), so I'll not describe it here. Nevertheless, you should look at new examples and the relevant wiki page. Oh, one more - '--https' option was renamed to '--ssl' like more short variant (we've saved two chars!). =)
 
 For now, item keys looks more pretty. Look at next examples:
 ```bash
