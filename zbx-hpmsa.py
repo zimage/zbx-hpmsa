@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import grp
 import json
 import urllib3
 from hashlib import md5
@@ -13,7 +14,50 @@ import sqlite3
 import requests
 
 
-def make_pwd_hash(cred, isfile=False):
+def install_script(tmp_dir, group):
+    """
+    Function create temp dir, init cache db and assign needed right.
+
+    :param tmp_dir: Path to temporary directory
+    :type: str
+    :param group: Group name to set chown root:group to tmp dir and cache db file
+    :type: str
+    :return: True or False
+    :rtype: bool
+    """
+
+    # Create config directory and assign rights
+    try:
+        if not os.path.exists(tmp_dir):
+            # Create directory
+            os.mkdir(tmp_dir)
+            os.chmod(tmp_dir, 0o775)
+    except PermissionError:
+        raise SystemExit('PERMISSION ERROR: You have no permissions to create "{}" directory.'.format(tmp_dir))
+
+    # Init cache db
+    if not os.path.exists(CACHE_DB):
+        sql_cmd('CREATE TABLE IF NOT EXISTS skey_cache ('
+                'dns_name TEXT NOT NULL, '
+                'ip TEXT NOT NULL, '
+                'proto TEXT NOT NULL, '
+                'expired TEXT NOT NULL, '
+                'skey TEXT NOT NULL DEFAULT 0, '
+                'PRIMARY KEY (dns_name, ip, proto))'
+                )
+        os.chmod(CACHE_DB, 0o664)
+
+    # Set owner to tmp dir
+    try:
+        os.chown(tmp_dir, 0, grp.getgrnam(group).gr_gid)
+        os.chown(CACHE_DB, 0, grp.getgrnam(group).gr_gid)
+    except KeyError:
+        print('WARNING: Cannot find group "{}" to set rights to "{}". Using "root" group.'.format(group, tmp_dir))
+        os.chown(tmp_dir, 0, 0)
+        os.chown(CACHE_DB, 0, grp.getgrnam(group).gr_gid)
+
+
+def make_cred_hash(cred, isfile=False):
     """
     Return md5 hash of login string.
 
@@ -40,22 +84,6 @@ def make_pwd_hash(cred, isfile=False):
     return hashed
 
 
-def prepare_tmp(path):
-    """
-    Create temporary directory for cache.
-
-    :param path: Path to temporary directory
-    :return: None
-    :rtype: None
-    """
-
-    try:
-        os.makedirs(path)
-        os.chmod(path, 0o777)
-    except PermissionError:
-        raise SystemExit("ERROR: '{}' not writable for user '{}'.".format(tmp_dir, os.getenv('USER')))
-
-
 def sql_cmd(query, fetch_all=False):
     """
     Check and execute SQL query.
@@ -68,7 +96,7 @@ def sql_cmd(query, fetch_all=False):
     :rtype: tuple
     """
 
-    if not any(verb.lower() in query.lower() for verb in ('DROP', 'DELETE', 'TRUNCATE', 'ALTER')):
+    try:
         conn = sqlite3.connect(CACHE_DB)
         cursor = conn.cursor()
         try:
@@ -83,10 +111,27 @@ def sql_cmd(query, fetch_all=False):
                 raise SystemExit('ERROR: {}. Query: {}'.format(e, query))
         conn.commit()
         conn.close()
-
         return data
-    else:
-        raise SystemExit('ERROR: Unacceptable SQL query: "{query}"'.format(query=query))
+    except sqlite3.OperationalError as e:
+        print("ERROR: {}".format(e))
+
+
+def display_cache():
+    """
+    Diplay cache data and exit with 0.
+
+    :return:
+    :rtype: None
+    None
+    """
+
+    print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('hostname', 'ip', 'proto', 'expired', 'sessionkey'))
+    print("{:-^30} {:-^15} {:-^7} {:-^19} {:-^32}".format('-', '-', '-', '-', '-'))
+
+    for cache in sql_cmd('SELECT * FROM skey_cache', fetch_all=True):
+        name, ip, proto, expired, sessionkey = cache
+        print("{:30} {:15} {:^7} {:19} {:32}".format(
+            name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), sessionkey))
 
 
 def get_skey(storage, hashed_login, use_cache=True):
@@ -671,33 +716,52 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.5.5'
+    VERSION = '0.6'
+    MSA_PARTS = ('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
+                 'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes')
 
-    # Parse all given arguments
-    parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
-    parser.add_argument('-d', '--lld', action='store_true', help='Making discovery')
-    parser.add_argument('-g', '--get-health', type=str, help='ID of MSA part which status we want to get',
-                        metavar='[ID|[all|full]]'
-                        )
-    parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
-    parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
-    parser.add_argument('-f', '--login-file', type=str, help='Path to file contains login and password')
-    parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of MSA', metavar='[IP|DNSNAME]')
-    parser.add_argument('-c', '--component', type=str, help='MSA part name',
-                        choices=('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
-                                 'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes'
-                                 )
-                        )
-    parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
-    parser.add_argument('-s', '--save-xml', type=str, nargs=1, help='Save response from storage as XML file')
-    parser.add_argument('--show-cache', action='store_true', help='Display cache data')
-    parser.add_argument('--https', type=str, choices=('direct', 'verify'), help='Use https instead http')
-    args = parser.parse_args()
+    # Main parser
+    main_parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
+    main_parser.add_argument('-u', '--username', default='monitor', type=str, help='User name to login in MSA')
+    main_parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
+    main_parser.add_argument('-f', '--login-file', nargs=1, type=str, help='Path to file contains login and password')
 
-    # Make no possible to use '--lld' and '--get' options together
-    if args.lld and args.get_health:
-        raise SystemExit("Syntax error: Cannot use '-d|--lld' and '-g|--get' options together.")
+    main_parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print script version and exit')
+    main_parser.add_argument('-s', '--save-xml', type=str, nargs=1, help='Save response from storage as XML file')
+    main_parser.add_argument('-t', '--tmp-dir', type=str, nargs=1, default='/dev/shm/zbx-hpmsa/',
+                             help='Path to temp directory')
+    main_parser.add_argument('--ssl', type=str, choices=('direct', 'verify'), help='Use https instead http')
 
+    # Subparsers
+    subparsers = main_parser.add_subparsers(help='Possible options list', dest='command')
+
+    # Install script command
+    install_parser = subparsers.add_parser('install', help='Do preparation tasks')
+
+    # Show script cache
+    cache_parser = subparsers.add_parser('cache', help='Operations with cache')
+    cache_parser.add_argument('--show', action='store_true', help='Display cache data')
+    cache_parser.add_argument('--drop', action='store_true', help='Display cache data')
+
+    # LLD script command
+    lld_parser = subparsers.add_parser('lld', help='Do low-level discovery task')
+    lld_parser.add_argument('msa', type=str, help='MSA address (DNS name or IP)')
+    lld_parser.add_argument('part', type=str, help='MSA part name', choices=MSA_PARTS)
+
+    # FULL script command
+    full_parser = subparsers.add_parser('full', help='Retrieve full data from MSA')
+    full_parser.add_argument('msa', type=str, help='MSA address (DNS name or IP)')
+    full_parser.add_argument('part', type=str, help='MSA part name', choices=MSA_PARTS)
+
+    # ?DELETE v0.7: HEALTH script command (Deprecated!)
+    health_parser = subparsers.add_parser('health', help='Retrieve health status for one component from MSA')
+    health_parser.add_argument('msa', type=str, help='MSA address (DNS name or IP)')
+    health_parser.add_argument('part', type=str, help='MSA part name', choices=MSA_PARTS)
+    health_parser.add_argument('pid', type=str, help='MSA part pid (e.g. "1.1" for disks)')
+
+    args = main_parser.parse_args()
+
+    # ?DELETE in v0.7 and correct make_lld()
     # Matches between CLI 'show' command args and OBJECT 'name' attribute in XML output.
     NAMES_MATCH = {
         'disks': 'drive',
@@ -712,61 +776,48 @@ if __name__ == '__main__':
         'volumes': 'volume'
     }
 
-    # Prepare tmp directory if it doesn't exists
-    if os.name == 'posix':  # REMOVE: v0.6.
-        tmp_dir = '/dev/shm/zbx-hpmsa/'
-        if not os.path.exists(tmp_dir):
-            prepare_tmp(tmp_dir)
-    else:
-        # REMOVE: v0.6. Current directory for Windows.
-        tmp_dir = ''
+    TMP_DIR = args.tmp_dir
+    CACHE_DB = TMP_DIR.rstrip('/') + '/zbx-hpmsa.cache.db'
 
-    # Create cache db if it not exists
-    CACHE_DB = tmp_dir + 'zbx-hpmsa.cache.db'
-    if not os.path.exists(CACHE_DB):
-        sql_cmd('CREATE TABLE IF NOT EXISTS skey_cache ('
-                'dns_name TEXT NOT NULL, '
-                'ip TEXT NOT NULL, '
-                'proto TEXT NOT NULL, '
-                'expired TEXT NOT NULL, '
-                'skey TEXT NOT NULL DEFAULT 0, '
-                'PRIMARY KEY (dns_name, ip, proto))'
-                )
+    if args.command in ('lld', 'full', 'health'):
+        # Set some global variables
+        SAVE_XML = args.save_xml
+        USE_HTTPS = args.ssl in ('direct', 'verify')
+        VERIFY_SSL = args.ssl == 'verify'
 
-    # Display cache data and exit
-    if args.show_cache:
-        print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('hostname', 'ip', 'proto', 'expired', 'sessionkey'))
-        print("{:-^30} {:-^15} {:-^7} {:-^19} {:-^32}".format('-', '-', '-', '-', '-'))
-        for cache in sql_cmd('SELECT * FROM skey_cache', fetch_all=True):
-            name, ip, proto, expired, skey = cache
-            print("{:30} {:15} {:^7} {:19} {:32}".format(
-                name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), skey))
+        # Connection address
+        MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
+
+        # Make login hash string
+        if args.login_file is not None:
+            CRED_HASH = make_cred_hash(args.login_file, isfile=True)
+        else:
+            CRED_HASH = make_cred_hash('_'.join([args.username, args.password]))
+
+        # Getting sessionkey
+        skey = get_skey(MSA_CONNECT, CRED_HASH)
+
+        # Make discovery
+        if args.command == 'lld':
+            print(make_lld(MSA_CONNECT, args.component, skey))
+
+        # Getting health of one MSA component
+        elif args.command == 'health':
+            print(get_health(MSA_CONNECT, args.part, args.pid, skey))
+
+        # Getting full components data in JSON
+        elif args.command == 'full':
+            print(get_full_json(MSA_CONNECT, args.part, skey))
+    # Preparations tasks
+    elif args.command == 'install':
+        install_script(TMP_DIR, 'zabbix')
+    # Operations with cache
+    elif args.command == 'cache':
+        if args.show:
+            display_cache()
+        elif args.drop:
+            sql_cmd('DELETE FROM skey_cache;')
+        # Default is --show
+        else:
+            display_cache()
         exit(0)
-
-    # Set some global variables
-    SAVE_XML = args.save_xml
-    USE_HTTPS = args.https in ('direct', 'verify')
-    VERIFY_SSL = args.https == 'verify'
-    # Set msa_connect - IP or DNS name and determine to use https or not
-    MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
-
-    # Make login hash string
-    if args.login_file:
-        CRED_HASH = make_pwd_hash(args.login_file, isfile=True)
-    else:
-        CRED_HASH = make_pwd_hash('_'.join([args.user, args.password]))
-
-    # Getting sessionkey
-    skey = get_skey(MSA_CONNECT, CRED_HASH)
-
-    # Make discovery
-    if args.lld:
-        print(make_lld(MSA_CONNECT, args.component, skey))
-    # Getting health of one MSA component
-    elif args.get_health and args.get_health not in ('all', 'full'):
-        print(get_health(MSA_CONNECT, args.component, args.get_health, skey))
-    # Getting full components data in JSON
-    elif args.get_health in ('all', 'full'):
-        print(get_full_json(MSA_CONNECT, args.component, skey))
-    else:
-        raise SystemExit("Syntax error: You must use '--lld' or '--get' option anyway.")
