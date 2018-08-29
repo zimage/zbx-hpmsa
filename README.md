@@ -27,6 +27,12 @@ Unlike previous versions, where we have one-level arguments for whole program, i
  > Here we check our cache and drop it, if we want
  Every command have own help (--help), so I'll not describe it here. Nevertheless, you should look at new examples and the relevant wiki page. Oh, one more - '--https' option was renamed to '--ssl' like more short variant (we've saved two chars!). =)
 
+For now, item keys looks more pretty. Look at next examples:
+```bash
+zbx-hpmsa.py["-m", "{HOST.CONN}", "-d", "-c", "controllers"]  vs  zbx-hpmsa.py["lld", "{HOST.CONN}", "controllers"]  
+zbx-hpmsa.py["-m", "{HOST.CONN}", "-g", "1.24", "-c", "disks"]  vs  zbx-hpmsa.py["health", "{HOST.CONN}", "disks", "1.24"]  
+zbx-hpmsa.py["-m", "{HOST.CONN}", "-g", "full", "-c", "disk-groups"]  vs  zbx-hpmsa.py["full", "{HOST.CONN}", "disks-groups"]  
+```
 ---
 
 ## Dependencies
