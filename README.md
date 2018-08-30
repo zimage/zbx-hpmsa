@@ -6,7 +6,7 @@ Also you can contact me with Telegram: @asand3r
 zbx-hpmsa provides possibility to make Low Level Discovery (LLD) of HPE MSA storage components via it's XML API and retrieve many of some other metrics like health statuses, temperature etc.
 Program wrote with Python 3.6, but works with Python 3.4 from EPEL.
 
-**Latest stable versions:** 0.4.1, 0.5.5
+**Latest stable versions:** 0.4.1, 0.5.6
 
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
 
@@ -104,11 +104,7 @@ Started with version v0.5.4 I've attached two new templates for Zabbix 4.0, whic
 Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
-HP MSA P2000 G3, HP MSA 2040, HP MSA 2050
+HP MSA P2000 G3, HP MSA 2040, HP MSA 2050, HP MSA2324FC (2000 G2 series, I think, will works too)
 
 **Known Issues**:
-- Sometimes appears the error "The user is not recognized on this system" though username and password are correct.
-  - Fixed in 0.2.5.2 and higher.  
 - Using '--https verify' with dns round-robin doesn't works correctly. It may give you the "ERROR: -10027", that means the user in not recongnized on the system. It happens because of session key was given from one MSA controller, but the script tries to establish connections the other one. The option '--https direct' will works fine, so you can try to use it instead. I haven't full solution right now, so just don't using it so. =)
-- LLD rule of enclosures and controllers can show the next error: __"ERROR: Cannot create item: item with same key 'item.key' already exists."__
-It's because of JSON file forming incorrect, but all items creating successfully. LLD code was corrected in v0.3.3.1 and v0.4.
