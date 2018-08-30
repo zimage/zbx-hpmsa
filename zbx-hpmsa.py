@@ -191,16 +191,19 @@ def query_xmlapi(url, sessionkey):
     try:
         # Connection timeout in seconds (connection, read).
         timeout = (1, 3)
+        # Headers for newer MSA and cookies for old MSA model
+        headers = {'sessionKey': sessionkey}
+        cookies = {'wbisessionkey': sessionkey, 'wbiusername': MSA_USERNAME}
         if USE_HTTPS:  # https
             url = 'https://' + url
             if VERIFY_SSL:
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file, timeout=timeout)
+                response = requests.get(url, headers=headers, cookies=cookies, verify=ca_file, timeout=timeout)
             else:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False, timeout=timeout)
+                response = requests.get(url, headers=headers, cookies=cookies, verify=False, timeout=timeout)
         else:  # http
             url = 'http://' + url
-            response = requests.get(url, headers={'sessionKey': sessionkey}, timeout=timeout)
+            response = requests.get(url, headers=headers, cookies=cookies, timeout=timeout)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except requests.exceptions.ConnectTimeout:
@@ -312,7 +315,10 @@ def make_lld(storage, component, sessionkey):
     elif component == 'vdisks':
         for vdisk in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             vdisk_id = vdisk.find("./PROPERTY[@name='name']").text
-            vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
+            try:
+                vdisk_type = vdisk.find("./PROPERTY[@name='storage-type']").text
+            except AttributeError:
+                vdisk_type = "UNKNOWN"
             lld_dict = {
                 "{#VDISK.ID}": "{}".format(vdisk_id),
                 "{#VDISK.TYPE}": "{}".format(vdisk_type)
@@ -321,7 +327,10 @@ def make_lld(storage, component, sessionkey):
     elif component == 'pools':
         for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             pool_id = pool.find("./PROPERTY[@name='name']").text
-            pool_type = pool.find("./PROPERTY[@name='storage-type']").text
+            try:
+                pool_type = pool.find("./PROPERTY[@name='storage-type']").text
+            except AttributeError:
+                pool_type = "UNKNOWN"
             lld_dict = {
                 "{#POOL.ID}": "{}".format(pool_id),
                 "{#POOL.TYPE}": "{}".format(pool_type)
@@ -330,7 +339,10 @@ def make_lld(storage, component, sessionkey):
     elif component == 'disk-groups':
         for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             dg_id = pool.find("./PROPERTY[@name='name']").text
-            dg_type = pool.find("./PROPERTY[@name='storage-type']").text
+            try:
+                dg_type = pool.find("./PROPERTY[@name='storage-type']").text
+            except AttributeError:
+                dg_type = "UNKNOWN"
             lld_dict = {
                 "{#DG.ID}": "{}".format(dg_id),
                 "{#DG.TYPE}": "{}".format(dg_type)
@@ -339,7 +351,10 @@ def make_lld(storage, component, sessionkey):
     elif component == 'volumes':
         for pool in xml.findall("./OBJECT[@name='{}']".format(NAMES_MATCH[component])):
             volume_id = pool.find("./PROPERTY[@name='volume-name']").text
-            volume_type = pool.find("./PROPERTY[@name='volume-type']").text
+            try:
+                volume_type = pool.find("./PROPERTY[@name='volume-type']").text
+            except AttributeError:
+                volume_type = "UNKNOWN"
             lld_dict = {
                 "{#VOLUME.ID}": "{}".format(volume_id),
                 "{#VOLUME.TYPE}": "{}".format(volume_type)
@@ -671,7 +686,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.5.5'
+    VERSION = '0.5.6'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
@@ -744,6 +759,8 @@ if __name__ == '__main__':
         exit(0)
 
     # Set some global variables
+    MSA_USERNAME = args.user
+    MSA_PASSWORD = args.password
     SAVE_XML = args.save_xml
     USE_HTTPS = args.https in ('direct', 'verify')
     VERIFY_SSL = args.https == 'verify'
@@ -754,7 +771,7 @@ if __name__ == '__main__':
     if args.login_file:
         CRED_HASH = make_pwd_hash(args.login_file, isfile=True)
     else:
-        CRED_HASH = make_pwd_hash('_'.join([args.user, args.password]))
+        CRED_HASH = make_pwd_hash('_'.join([MSA_USERNAME, MSA_PASSWORD]))
 
     # Getting sessionkey
     skey = get_skey(MSA_CONNECT, CRED_HASH)
