@@ -236,16 +236,19 @@ def query_xmlapi(url, sessionkey):
     try:
         # Connection timeout in seconds (connection, read).
         timeout = (1, 3)
+        # Headers for newer MSA and cookies for old MSA model
+        headers = {'sessionKey': sessionkey}
+        cookies = {'wbisessionkey': sessionkey, 'wbiusername': MSA_USERNAME}
         if USE_HTTPS:  # https
             url = 'https://' + url
             if VERIFY_SSL:
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file, timeout=timeout)
+                response = requests.get(url, headers=headers, cookies=cookies, verify=ca_file, timeout=timeout)
             else:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False, timeout=timeout)
+                response = requests.get(url, headers=headers, cookies=cookies, verify=False, timeout=timeout)
         else:  # http
             url = 'http://' + url
-            response = requests.get(url, headers={'sessionKey': sessionkey}, timeout=timeout)
+            response = requests.get(url, headers=headers, cookies=cookies, timeout=timeout)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except requests.exceptions.ConnectTimeout:
@@ -784,6 +787,8 @@ if __name__ == '__main__':
         SAVE_XML = args.save_xml
         USE_HTTPS = args.ssl in ('direct', 'verify')
         VERIFY_SSL = args.ssl == 'verify'
+        MSA_USERNAME = args.username
+        MSA_PASSWORD = args.password
 
         # Connection address
         MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
@@ -792,7 +797,7 @@ if __name__ == '__main__':
         if args.login_file is not None:
             CRED_HASH = make_cred_hash(args.login_file, isfile=True)
         else:
-            CRED_HASH = make_cred_hash('_'.join([args.username, args.password]))
+            CRED_HASH = make_cred_hash('_'.join([MSA_USERNAME, MSA_PASSWORD]))
 
         # Getting sessionkey
         skey = get_skey(MSA_CONNECT, CRED_HASH)
