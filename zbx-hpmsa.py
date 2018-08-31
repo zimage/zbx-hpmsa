@@ -286,24 +286,24 @@ def get_health(storage, component, item, sessionkey):
     :rtype: str
     """
 
-    # Forming url
-    if component in ('vdisks', 'disks'):
-        url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
-    else:
-        url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
-
-    # Querying API
-    ret_code, descr, xml = query_xmlapi(url, sessionkey)
-    if ret_code != '0':
-        raise SystemExit('ERROR: {} : {}'.format(ret_code, descr))
-
     # Components ID matching dict.
     id_md = {
         'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'power-supplies': 'durable-id',
         'fans': 'durable-id', 'pools': 'name', 'disk-groups': 'name', 'ports': 'port', 'volumes': 'volume-name'
     }
 
-    # Returns health statuses
+    # Forming url
+    if component in ('vdisks', 'disks'):
+        url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
+    else:
+        url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+
+    # Make a query to API
+    ret_code, descr, xml = query_xmlapi(url, sessionkey)
+    if ret_code != '0':
+        raise SystemExit('ERROR: {} : {}'.format(ret_code, descr))
+
+    # Return health status (int)
     if component in ('vdisks', 'disks'):
         health = xml.find("./OBJECT[@name='{}']/PROPERTY[@name='health-numeric']".format(NAMES_MATCH[component])).text
     else:
@@ -800,11 +800,9 @@ if __name__ == '__main__':
         # Make discovery
         if args.command == 'lld':
             print(make_lld(MSA_CONNECT, args.component, skey))
-
         # Getting health of one MSA component
         elif args.command == 'health':
             print(get_health(MSA_CONNECT, args.part, args.pid, skey))
-
         # Getting full components data in JSON
         elif args.command == 'full':
             print(get_full_json(MSA_CONNECT, args.part, skey))
