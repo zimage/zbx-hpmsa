@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.0</version>
-    <date>2018-09-06T16:09:29Z</date>
+    <date>2018-09-06T16:19:55Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -919,9 +919,7 @@ Tested with MSA 2040, MSA 2050, MSA P2000G3</description>
                             <description>MSA controller {#CONTROLLER.ID} CPU load in percent.</description>
                             <inventory_link>0</inventory_link>
                             <applications/>
-                            <valuemap>
-                                <name>HPE MSA Controller redundancy</name>
-                            </valuemap>
+                            <valuemap/>
                             <logtimefmt/>
                             <preprocessing>
                                 <step>
@@ -1195,9 +1193,7 @@ Tested with MSA 2040, MSA 2050, MSA P2000G3</description>
                             <description>MSA controller {#CONTROLLER.ID} IOPS count.</description>
                             <inventory_link>0</inventory_link>
                             <applications/>
-                            <valuemap>
-                                <name>HPE MSA Controller redundancy</name>
-                            </valuemap>
+                            <valuemap/>
                             <logtimefmt/>
                             <preprocessing>
                                 <step>
