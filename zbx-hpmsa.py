@@ -176,7 +176,7 @@ def get_skey(storage, hashed_login, use_cache=True):
 
         # 1 - success, write sessionkey to DB and return it
         if ret_code == '1':
-            expired_time = datetime.timestamp(datetime.utcnow() + timedelta(minutes=15))
+            expired_time = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
             if not USE_HTTPS:  # http
                 if sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage)) is None:
                     sql_cmd('INSERT INTO skey_cache VALUES ('
@@ -236,19 +236,17 @@ def query_xmlapi(url, sessionkey):
     try:
         # Connection timeout in seconds (connection, read).
         timeout = (1, 3)
-        # Headers for newer MSA and cookies for old MSA model
-        headers = {'sessionKey': sessionkey}
-        cookies = {'wbisessionkey': sessionkey, 'wbiusername': MSA_USERNAME}
-        if USE_HTTPS:  # https
-            url = 'https://' + url
+        full_url = 'https://' + url if USE_HTTPS else 'http://' + url
+        headers = {'sessionKey': sessionkey} if API_VERSION == 1 else {
+            'Cookie': "wbiusername={}; wbisessionkey={}".format(MSA_USERNAME, sessionkey)}
+        if USE_HTTPS:
             if VERIFY_SSL:
-                response = requests.get(url, headers=headers, cookies=cookies, verify=ca_file, timeout=timeout)
+                response = requests.get(full_url, headers=headers, verify=ca_file, timeout=timeout)
             else:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                response = requests.get(url, headers=headers, cookies=cookies, verify=False, timeout=timeout)
-        else:  # http
-            url = 'http://' + url
-            response = requests.get(url, headers=headers, cookies=cookies, timeout=timeout)
+                response = requests.get(full_url, headers=headers, verify=False, timeout=timeout)
+        else:
+            response = requests.get(full_url, headers=headers, timeout=timeout)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except requests.exceptions.ConnectTimeout:
@@ -725,10 +723,10 @@ if __name__ == '__main__':
 
     # Main parser
     main_parser = ArgumentParser(description='Zabbix script for HP MSA XML API.', add_help=True)
+    main_parser.add_argument('-a', '--api', type=int, default=2, choices=(1, 2), help='MSA API version (default: 2)')
     main_parser.add_argument('-u', '--username', default='monitor', type=str, help='User name to login in MSA')
     main_parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     main_parser.add_argument('-f', '--login-file', nargs=1, type=str, help='Path to file contains login and password')
-
     main_parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print script version and exit')
     main_parser.add_argument('-s', '--save-xml', type=str, nargs=1, help='Save response from storage as XML file')
     main_parser.add_argument('-t', '--tmp-dir', type=str, nargs=1, default='/dev/shm/zbx-hpmsa/',
@@ -744,7 +742,7 @@ if __name__ == '__main__':
     # Show script cache
     cache_parser = subparsers.add_parser('cache', help='Operations with cache')
     cache_parser.add_argument('--show', action='store_true', help='Display cache data')
-    cache_parser.add_argument('--drop', action='store_true', help='Display cache data')
+    cache_parser.add_argument('--drop', action='store_true', help='Drop cache data')
 
     # LLD script command
     lld_parser = subparsers.add_parser('lld', help='Do low-level discovery task')
@@ -779,6 +777,7 @@ if __name__ == '__main__':
         'volumes': 'volume'
     }
 
+    API_VERSION = args.api
     TMP_DIR = args.tmp_dir
     CACHE_DB = TMP_DIR.rstrip('/') + '/zbx-hpmsa.cache.db'
 
@@ -804,7 +803,7 @@ if __name__ == '__main__':
 
         # Make discovery
         if args.command == 'lld':
-            print(make_lld(MSA_CONNECT, args.component, skey))
+            print(make_lld(MSA_CONNECT, args.part, skey))
         # Getting health of one MSA component
         elif args.command == 'health':
             print(get_health(MSA_CONNECT, args.part, args.pid, skey))
