@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.0</version>
-    <date>2018-09-06T16:19:55Z</date>
+    <date>2018-09-13T09:47:37Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -9,10 +9,10 @@
     </groups>
     <templates>
         <template>
-            <template>Template HPE MSA 1040-2040 Plus v0.6</template>
-            <name>Template HPE MSA 1040-2040 Plus v0.6</name>
+            <template>Template HPE MSA for Zabbix 4.0</template>
+            <name>Template HPE MSA for Zabbix 4.0</name>
             <description>Monitor HPE MSA storages.&#13;
-Tested with MSA 2040, MSA 2050, MSA P2000G3</description>
+Tested with HP MSA P2000 G3, HP MSA 2040, HP MSA 2050, HP MSA2324FC.</description>
             <groups>
                 <group>
                     <name>Templates</name>
@@ -1442,7 +1442,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CONTROLLER.ID} health status {ITEM.LASTVALUE}</name>
@@ -1463,7 +1463,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CONTROLLER.ID} operational status {ITEM.LASTVALUE}</name>
@@ -1484,7 +1484,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CONTROLLER.ID} ping failed</name>
@@ -1505,7 +1505,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;redundancy-num&quot;].avg(#3)}&lt;&gt;2</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;redundancy-num&quot;].avg(#3)}&lt;&gt;2</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CONTROLLER.ID} redundancy status {ITEM.LASTVALUE}</name>
@@ -1526,7 +1526,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;flash-health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;flash-health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Flash card on Controller {#CONTROLLER.ID} health status {ITEM.LASTVALUE}</name>
@@ -1547,7 +1547,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;flash-status-num&quot;].avg(#3)}&lt;&gt;1</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.ctrl[&quot;{#CONTROLLER.ID}&quot;,&quot;flash-status-num&quot;].avg(#3)}&lt;&gt;1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Flash card on Controller {#CONTROLLER.ID} operational status {ITEM.LASTVALUE}</name>
@@ -1568,7 +1568,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:net.tcp.service[http,{#CONTROLLER.IP},80].avg(#3)}&lt;&gt;1</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:net.tcp.service[http,{#CONTROLLER.IP},80].avg(#3)}&lt;&gt;1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Web interface on controller {#CONTROLLER.ID} ({#CONTROLLER.IP}) is down</name>
@@ -1583,7 +1583,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             <dependencies>
                                 <dependency>
                                     <name>Controller {#CONTROLLER.ID} ping failed</name>
-                                    <expression>{Template HPE MSA 1040-2040 Plus v0.6:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
+                                    <expression>{Template HPE MSA for Zabbix 4.0:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
                                     <recovery_expression/>
                                 </dependency>
                             </dependencies>
@@ -1925,7 +1925,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.dg[&quot;{#DG.ID}&quot;,&quot;owner-num&quot;].last()}&lt;&gt;{Template HPE MSA 1040-2040 Plus v0.6:msa.dg[&quot;{#DG.ID}&quot;,&quot;owner-pref-num&quot;].last()}</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.dg[&quot;{#DG.ID}&quot;,&quot;owner-num&quot;].last()}&lt;&gt;{Template HPE MSA for Zabbix 4.0:msa.dg[&quot;{#DG.ID}&quot;,&quot;owner-pref-num&quot;].last()}</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk group {#DG.ID} current owner is not preferred</name>
@@ -1946,7 +1946,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.dg[&quot;{#DG.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.dg[&quot;{#DG.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk group {#DG.ID} health status is {ITEM.LASTVALUE}</name>
@@ -1967,7 +1967,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.dg[&quot;{#DG.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.dg[&quot;{#DG.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk group {#DG.ID} operational status is {ITEM.LASTVALUE}</name>
@@ -2316,7 +2316,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.disk[&quot;{#DISK.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.disk[&quot;{#DISK.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk {#DISK.ID} health status is {ITEM.LASTVALUE}</name>
@@ -2337,7 +2337,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.disk[&quot;{#DISK.ID}&quot;,&quot;error&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.disk[&quot;{#DISK.ID}&quot;,&quot;error&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk {#DISK.ID} last error status is {ITEM.LASTVALUE}</name>
@@ -2358,7 +2358,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.disk[&quot;{#DISK.ID}&quot;,&quot;power-on-hours&quot;].avg(#3)}&gt;{$MSA_DISK_POWER_ON_HOURS}</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.disk[&quot;{#DISK.ID}&quot;,&quot;power-on-hours&quot;].avg(#3)}&gt;{$MSA_DISK_POWER_ON_HOURS}</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk {#DISK.ID} summary work time too big ({ITEM.LASTVALUE} hours)</name>
@@ -2379,7 +2379,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.disk[&quot;{#DISK.ID}&quot;,&quot;temperature&quot;].avg(#3)}&gt;35</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.disk[&quot;{#DISK.ID}&quot;,&quot;temperature&quot;].avg(#3)}&gt;35</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk {#DISK.ID} temperature too big ({ITEM.LASTVALUE})</name>
@@ -2594,7 +2594,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.encl[&quot;{#ENCLOSURE.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.encl[&quot;{#ENCLOSURE.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Enclosure {#ENCLOSURE.ID} health status is {ITEM.LASTVALUE}</name>
@@ -2615,7 +2615,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.encl[&quot;{#ENCLOSURE.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;1</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.encl[&quot;{#ENCLOSURE.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Enclosure {#ENCLOSURE.ID} operational status is {ITEM.LASTVALUE}</name>
@@ -2897,7 +2897,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.fan[&quot;{#FAN.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.fan[&quot;{#FAN.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Fan {#FAN.ID} health status is {ITEM.LASTVALUE}</name>
@@ -2918,7 +2918,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.fan[&quot;{#FAN.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.fan[&quot;{#FAN.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Fan {#FAN.ID} operational status is {ITEM.LASTVALUE}</name>
@@ -2939,7 +2939,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.fan[&quot;{#FAN.ID}&quot;,&quot;speed&quot;].avg(#3)}&lt;2000</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.fan[&quot;{#FAN.ID}&quot;,&quot;speed&quot;].avg(#3)}&lt;2000</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Fan {#FAN.ID} rotation speed to low</name>
@@ -3223,7 +3223,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.pool[&quot;{#POOL.ID}&quot;,&quot;owner-num&quot;].last()}&lt;&gt;{Template HPE MSA 1040-2040 Plus v0.6:msa.pool[&quot;{#POOL.ID}&quot;,&quot;owner-pref-num&quot;].last()}</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.pool[&quot;{#POOL.ID}&quot;,&quot;owner-num&quot;].last()}&lt;&gt;{Template HPE MSA for Zabbix 4.0:msa.pool[&quot;{#POOL.ID}&quot;,&quot;owner-pref-num&quot;].last()}</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Pool {#POOL.ID} current owner not preferred</name>
@@ -3244,7 +3244,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.pool[&quot;{#POOL.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.pool[&quot;{#POOL.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Pool {#POOL.ID} health status is {ITEM.LASTVALUE}</name>
@@ -3535,7 +3535,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.port[&quot;{#PORT.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.port[&quot;{#PORT.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Port {#PORT.ID} health status is {ITEM.LASTVALUE}</name>
@@ -3556,7 +3556,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.port[&quot;{#PORT.ID}&quot;,&quot;port-status-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.port[&quot;{#PORT.ID}&quot;,&quot;port-status-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Port {#PORT.ID} operational status is {ITEM.LASTVALUE}</name>
@@ -3577,7 +3577,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.port[&quot;{#PORT.ID}&quot;,&quot;sfp-status&quot;].count(#3,&quot;OK&quot;,like)}&lt;2</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.port[&quot;{#PORT.ID}&quot;,&quot;sfp-status&quot;].count(#3,&quot;OK&quot;,like)}&lt;2</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Port {#PORT.ID} SFP module operational status is {ITEM.LASTVALUE}</name>
@@ -4194,7 +4194,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Power supply unit {#POWERSUPPLY.ID} health status is {ITEM.LASTVALUE}</name>
@@ -4215,7 +4215,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;status-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Power supply unit {#POWERSUPPLY.ID} operational status is {ITEM.LASTVALUE}</name>
@@ -4236,7 +4236,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;temperature&quot;].avg(#3)}&gt;35</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;temperature&quot;].avg(#3)}&gt;35</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Power supply unit {#POWERSUPPLY.ID} temperature too big</name>
@@ -4284,7 +4284,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                     <calc_fnc>2</calc_fnc>
                                     <type>0</type>
                                     <item>
-                                        <host>Template HPE MSA 1040-2040 Plus v0.6</host>
+                                        <host>Template HPE MSA for Zabbix 4.0</host>
                                         <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;power-5i&quot;]</key>
                                     </item>
                                 </graph_item>
@@ -4296,7 +4296,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                     <calc_fnc>2</calc_fnc>
                                     <type>0</type>
                                     <item>
-                                        <host>Template HPE MSA 1040-2040 Plus v0.6</host>
+                                        <host>Template HPE MSA for Zabbix 4.0</host>
                                         <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;power-5v&quot;]</key>
                                     </item>
                                 </graph_item>
@@ -4308,7 +4308,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                     <calc_fnc>2</calc_fnc>
                                     <type>0</type>
                                     <item>
-                                        <host>Template HPE MSA 1040-2040 Plus v0.6</host>
+                                        <host>Template HPE MSA for Zabbix 4.0</host>
                                         <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;power-12i&quot;]</key>
                                     </item>
                                 </graph_item>
@@ -4320,7 +4320,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                     <calc_fnc>2</calc_fnc>
                                     <type>0</type>
                                     <item>
-                                        <host>Template HPE MSA 1040-2040 Plus v0.6</host>
+                                        <host>Template HPE MSA for Zabbix 4.0</host>
                                         <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;power-12v&quot;]</key>
                                     </item>
                                 </graph_item>
@@ -4332,7 +4332,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                                     <calc_fnc>2</calc_fnc>
                                     <type>0</type>
                                     <item>
-                                        <host>Template HPE MSA 1040-2040 Plus v0.6</host>
+                                        <host>Template HPE MSA for Zabbix 4.0</host>
                                         <key>msa.psu[&quot;{#POWERSUPPLY.ID}&quot;,&quot;power-33v&quot;]</key>
                                     </item>
                                 </graph_item>
@@ -4608,7 +4608,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;owner-num&quot;].last()}&lt;&gt;{Template HPE MSA 1040-2040 Plus v0.6:msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;owner-pref-num&quot;].last()}</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;owner-num&quot;].last()}&lt;&gt;{Template HPE MSA for Zabbix 4.0:msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;owner-pref-num&quot;].last()}</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Volume {#VOLUME.ID} current owner not preferred</name>
@@ -4629,7 +4629,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus v0.6:msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 4.0:msa.volume[&quot;{#VOLUME.ID}&quot;,&quot;health-num&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Volume {#VOLUME.ID} health status is {ITEM.LASTVALUE}</name>
@@ -4709,7 +4709,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
     </templates>
     <triggers>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;controllers&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;controllers&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Conrollers data</name>
@@ -4730,7 +4730,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;disk-groups&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;disk-groups&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Disk Groups data</name>
@@ -4751,7 +4751,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;enclosures&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;enclosures&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Enclosures data</name>
@@ -4772,7 +4772,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;fans&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;fans&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Fans data</name>
@@ -4793,7 +4793,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;disks&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;disks&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Physical disks data</name>
@@ -4814,7 +4814,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;pools&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;pools&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Pools data</name>
@@ -4835,7 +4835,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;ports&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;ports&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Ports data</name>
@@ -4856,7 +4856,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;power-supplies&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;power-supplies&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Power Supplies data</name>
@@ -4877,7 +4877,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
             </tags>
         </trigger>
         <trigger>
-            <expression>{Template HPE MSA 1040-2040 Plus v0.6:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;volumes&quot;].nodata(10m)}=1</expression>
+            <expression>{Template HPE MSA for Zabbix 4.0:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;-u&quot;, &quot;{$MSA.USERNAME}&quot;, &quot;-p&quot;, &quot;{$MSA.PASSWORD}&quot;, &quot;full&quot;, &quot;{HOST.CONN}&quot;, &quot;volumes&quot;].nodata(10m)}=1</expression>
             <recovery_mode>0</recovery_mode>
             <recovery_expression/>
             <name>Cannot obtain MSA Volumes data</name>
