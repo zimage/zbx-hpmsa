@@ -1,12 +1,12 @@
 # zbx-hpmsa
-Utility for get statuses of HPE MSA storage components via XML API.  
+Utility for retrieve hardware info from HPE MSA storage via XML API for Zabbix Monitoring Platform.
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with Telegram: @asand3r
 
-zbx-hpmsa provides possibility to make Low Level Discovery (LLD) of HPE MSA storage components via it's XML API and retrieve many of some other metrics like health statuses, temperature etc.
-Program wrote with Python 3.6, but works with Python 3.4 from EPEL.
+zbx-hpmsa provides ability to make Low Level Discovery (LLD) of HPE MSA storage components via it's XML API and retrieve many of some other metrics like health statuses, temperature etc.
+Program wrote with Python 3.7, but works fine with Python 3.4 from EPEL.
 
-**Latest stable versions:** 0.5.5, 0.6
+**Latest stable versions:** 0.6
 
 __Please, read [Requirements and Installation](https://github.com/asand3r/zbx-hpmsa/wiki/Requirements-and-Installation) section on Wiki page before use.__  
 
@@ -109,12 +109,12 @@ In addition I've attached preconfigured Zabbix Templates here, so you can use th
 Templates using LLD functionality and {HOST.CONN} macro to determine HTTP(S) connection URL, so make sure that it points to right DNS name or IP and your MSA has HTTP(S) protocol enabled.  
 Also template expects what MSA storage has default user with default password - **'monitor'@'!monitor'**, but if it isn't true - correct it with '-u' and '-p' or '-f|--login-file' options.  
 If you want to use HTTPS, you must correct template and be sure what {HOST.CONN} macro contains FQDN. By the way, look at relevant Wiki page for HTTPS support.  
-Started with version v0.5.4 I've attached two new templates for Zabbix 4.0, which using dependent items functionality and can retrieve much more metrics from storage than earlier versions. Check [Wiki](https://github.com/asand3r/zbx-hpmsa/wiki/Zabbix-4.0-Templates) to read more about it or if you speak russian look at my post on [habr.com](https://habr.com/post/419221/).
+Started with version v0.5.4 I've attached new template file for Zabbix 4.0, which using dependent items functionality and can retrieve much more metrics from storage than earlier versions. Check [Wiki](https://github.com/asand3r/zbx-hpmsa/wiki/Zabbix-4.0-Templates) to read more about it or if you speak russian look at my post on [habr.com](https://habr.com/post/419221/).
 
 Have fun and don't forget to rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
-HP MSA P2000 G3, HP MSA 2040, HP MSA 2050
+HP MSA P2000 G3, HP MSA 2040, HP MSA 2050, HP MSA2324FC (2000 G2 series, I think, will works too)
 
 **Known Issues**:
-- Using '--https verify' with dns round-robin doesn't works correctly. It may give you the "ERROR: -10027", that means the user in not recongnized on the system. It happens because of session key was given from one MSA controller, but the script tries to establish connections the other one. The option '--https direct|--ssl direct' will works fine, so you can try to use it instead. I haven't full solution right now, so just don't using it so. =)
+- Using '--https verify' with round-robin DNS name doesn't works correctly. It may give you the "ERROR: -10027", that means the user in not recongnized on the system. It happens because of session key was given from one MSA controller, but the script tries to establish connections the other one. The option '--https direct|--ssl direct' will works fine, so you can try to use it instead. I haven't full solution right now, so just don't using it so. =)

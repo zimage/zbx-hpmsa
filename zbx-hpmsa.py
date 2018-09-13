@@ -16,14 +16,14 @@ import requests
 
 def install_script(tmp_dir, group):
     """
-    Function create temp dir, init cache db and assign needed right.
+    Function creates temp dir, init cache db and assign needed right.
 
     :param tmp_dir: Path to temporary directory
     :type: str
     :param group: Group name to set chown root:group to tmp dir and cache db file
     :type: str
-    :return: True or False
-    :rtype: bool
+    :return: None
+    :rtype: None
     """
 
     # Create config directory and assign rights
@@ -52,7 +52,7 @@ def install_script(tmp_dir, group):
         os.chown(tmp_dir, 0, grp.getgrnam(group).gr_gid)
         os.chown(CACHE_DB, 0, grp.getgrnam(group).gr_gid)
     except KeyError:
-        print('WARNING: Cannot find group "{}" to set rights to "{}". Using "root" group.'.format(group, tmp_dir))
+        print('WARNING: Cannot find group "{}" to set access rights. Using "root" group.'.format(group))
         os.chown(tmp_dir, 0, 0)
         os.chown(CACHE_DB, 0, grp.getgrnam(group).gr_gid)
 
@@ -78,7 +78,7 @@ def make_cred_hash(cred, isfile=False):
                 else:
                     hashed = login_data
         except FileNotFoundError:
-            raise SystemExit("ERROR: File password doesn't exists: {}".format(cred))
+            raise SystemExit("ERROR: File with login data doesn't exists: {}".format(cred))
     else:
         hashed = md5(cred.encode()).hexdigest()
     return hashed
@@ -118,11 +118,10 @@ def sql_cmd(query, fetch_all=False):
 
 def display_cache():
     """
-    Diplay cache data and exit with 0.
+    Diplay cache data and exit.
 
-    :return:
+    :return: None
     :rtype: None
-    None
     """
 
     print("{:^30} {:^15} {:^7} {:^19} {:^32}".format('hostname', 'ip', 'proto', 'expired', 'sessionkey'))
@@ -176,37 +175,33 @@ def get_skey(storage, hashed_login, use_cache=True):
 
         # 1 - success, write sessionkey to DB and return it
         if ret_code == '1':
-            expired_time = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
-            if not USE_HTTPS:  # http
-                if sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage)) is None:
+            expired = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
+            if not USE_HTTPS:
+                cache_data = sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage))
+                if cache_data is None:
                     sql_cmd('INSERT INTO skey_cache VALUES ('
-                            '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage,
-                                                                                  ip=storage,
-                                                                                  time=expired_time,
-                                                                                  skey=sessionkey
-                                                                                  )
+                            '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage, ip=storage,
+                                                                                  time=expired, skey=sessionkey)
                             )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
-                            'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey,
-                                                                      expired=expired_time,
-                                                                      ip=storage
-                                                                      )
+                            'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey, expired=expired, ip=storage)
                             )
-            else:  # https
-                if sql_cmd('SELECT dns_name, ip FROM skey_cache '
-                           'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip)) is None:
+            else:
+                cache_data = sql_cmd('SELECT dns_name, ip FROM skey_cache '
+                                     'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip))
+                if cache_data is None:
                     sql_cmd('INSERT INTO skey_cache VALUES ('
                             '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
                                                                                        ip=msa_ip,
-                                                                                       expired=expired_time,
+                                                                                       expired=expired,
                                                                                        skey=sessionkey
                                                                                        )
                             )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
                             'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
-                                                                                             expired=expired_time,
+                                                                                             expired=expired,
                                                                                              name=storage,
                                                                                              ip=msa_ip
                                                                                              )
@@ -754,7 +749,7 @@ if __name__ == '__main__':
     full_parser.add_argument('msa', type=str, help='MSA address (DNS name or IP)')
     full_parser.add_argument('part', type=str, help='MSA part name', choices=MSA_PARTS)
 
-    # ?DELETE v0.7: HEALTH script command (Deprecated!)
+    # ?DELETE v0.7: HEALTH script command (Deprecated? Needn't anymore?)
     health_parser = subparsers.add_parser('health', help='Retrieve health status for one component from MSA')
     health_parser.add_argument('msa', type=str, help='MSA address (DNS name or IP)')
     health_parser.add_argument('part', type=str, help='MSA part name', choices=MSA_PARTS)
