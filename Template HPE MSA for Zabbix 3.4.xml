@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>3.4</version>
-    <date>2018-06-15T09:46:57Z</date>
+    <date>2018-09-13T11:03:59Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -9,16 +9,9 @@
     </groups>
     <templates>
         <template>
-            <template>Template HPE MSA 1040-2040 Plus</template>
-            <name>Template HPE MSA 1040-2040 Plus</name>
-            <description>Monitor HPE MSA storages models1040/2040+ (not for use with P2000G3 and lower).&#13;
-&#13;
-Health shatuses in most cases:&#13;
-0: OK&#13;
-1: Degraded&#13;
-2: Fault&#13;
-3: N/A&#13;
-4: Unknown</description>
+            <template>Template HPE MSA for Zabbix 3.4</template>
+            <name>Template HPE MSA for Zabbix 3.4</name>
+            <description>Monitoring HPE MSA storages.</description>
             <groups>
                 <group>
                     <name>Templates</name>
@@ -60,8 +53,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;controllers&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -93,9 +86,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>icmpping[{#CONTROLLER.IP},2]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <delay>30s</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -135,9 +128,9 @@ Health shatuses in most cases:&#13;
                             <snmp_community/>
                             <snmp_oid/>
                             <key>net.tcp.service[http,{#CONTROLLER.IP},80]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -176,10 +169,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CONTROLLER.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;controllers&quot;, &quot;{#CONTROLLER.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -206,7 +199,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Controllers</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -216,13 +211,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CONTROLLER.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;controllers&quot;, &quot;{#CONTROLLER.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
-                            <name>Controller {#CONTROLLER.ID} health status is not OK</name>
+                            <name>Controller {#CONTROLLER.ID} health status is {ITEM.LASTVALUE}</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} with SN {#CONTROLLER.SN} and IP {#CONTROLLER.IP} health status is {ITEM.LASTVALUE}.</description>
@@ -237,13 +232,13 @@ Health shatuses in most cases:&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CONTROLLER.ID} ping failed</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} doesn't responce on ping.</description>
@@ -258,13 +253,13 @@ Health shatuses in most cases:&#13;
                             </tags>
                         </trigger_prototype>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:net.tcp.service[http,{#CONTROLLER.IP},80].avg(#3)}&lt;&gt;1</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:net.tcp.service[http,{#CONTROLLER.IP},80].avg(#3)}&lt;&gt;1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Web interface on controller {#CONTROLLER.ID} ({#CONTROLLER.IP}) is down</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>1</priority>
                             <description>Cannot connect to controller {#CONTROLLER.ID} web interface.</description>
@@ -273,7 +268,7 @@ Health shatuses in most cases:&#13;
                             <dependencies>
                                 <dependency>
                                     <name>Controller {#CONTROLLER.ID} ping failed</name>
-                                    <expression>{Template HPE MSA 1040-2040 Plus:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
+                                    <expression>{Template HPE MSA for Zabbix 3.4:icmpping[{#CONTROLLER.IP},2].avg(#3)}&lt;&gt;1</expression>
                                     <recovery_expression/>
                                 </dependency>
                             </dependencies>
@@ -294,8 +289,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;disk-groups&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -326,10 +321,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;{#DG.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;disk-groups&quot;, &quot;{#DG.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -362,7 +357,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Disk Groups</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -372,13 +369,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disk-groups&quot;, &quot;-g&quot;, &quot;{#DG.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;disk-groups&quot;, &quot;{#DG.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Disk group {#DG.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Disk group {#DG.ID} health status in {ITEM.LASTVALUE}.</description>
@@ -402,8 +399,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;disks&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -434,10 +431,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISK.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_5M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;disks&quot;, &quot;{#DISK.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -470,7 +467,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Physical Disks</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -480,13 +479,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISK.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;disks&quot;, &quot;{#DISK.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Physical disk in slot {#DISK.ID} is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Physical disk in slot {#DISK.ID} with SN {#DISK.SN} has status {ITEM.LASTVALUE}.</description>
@@ -510,8 +509,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;enclosures&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -542,10 +541,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSURE.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;enclosures&quot;, &quot;{#ENCLOSURE.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -578,7 +577,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Enclosures</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -588,13 +589,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSURE.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;enclosures&quot;, &quot;{#ENCLOSURE.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
-                            <name>Enclosure {#ENCLOSURE.ID} health status is not OK</name>
+                            <name>Enclosure {#ENCLOSURE.ID} health status is {ITEM.LASTVALUE}</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Enclosure {#ENCLOSURE.ID} with SN {#ENCLOSURE.SN} health status is {ITEM.LASTVALUE}.</description>
@@ -618,8 +619,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;fans&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;fans&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -650,10 +651,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;fans&quot;, &quot;-g&quot;, &quot;{#FAN.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;fans&quot;, &quot;{#FAN.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -686,7 +687,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Fans</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -696,13 +699,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;fans&quot;, &quot;-g&quot;, &quot;{#FAN.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;fans&quot;, &quot;{#FAN.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Fan {#FAN.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Fan {#FAN.ID} in {#FAN.LOCATION} health status is {ITEM.LASTVALUE}.</description>
@@ -726,8 +729,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;pools&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -758,10 +761,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;, &quot;-g&quot;, &quot;{#POOL.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;pools&quot;, &quot;{#POOL.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -794,7 +797,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Pools</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -804,13 +809,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;pools&quot;, &quot;-g&quot;, &quot;{#POOL.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;pools&quot;, &quot;{#POOL.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Pool {#POOL.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Pool {#POOL.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -834,8 +839,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;ports&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;ports&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -873,10 +878,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;ports&quot;, &quot;-g&quot;, &quot;{#PORT.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;ports&quot;, &quot;{#PORT.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -909,7 +914,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Ports</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -919,13 +926,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;ports&quot;, &quot;-g&quot;, &quot;{#PORT.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;ports&quot;, &quot;{#PORT.ID}&quot;].avg(#3)}&gt;0.33</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Port {#PORT.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Port {#PORT.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -949,8 +956,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;power-supplies&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;power-supplies&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -981,10 +988,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;power-supplies&quot;, &quot;-g&quot;, &quot;{#POWERSUPPLY.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;power-supplies&quot;, &quot;{#POWERSUPPLY.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -1017,7 +1024,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Power Supplies</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -1027,7 +1036,7 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;power-supplies&quot;, &quot;-g&quot;, &quot;{#POWERSUPPLY.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;power-supplies&quot;, &quot;{#POWERSUPPLY.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Power supply {#POWERSUPPLY.ID} health status is not OK</name>
@@ -1057,8 +1066,8 @@ Health shatuses in most cases:&#13;
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;]</key>
-                    <delay>1h</delay>
+                    <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;lld&quot;, &quot;{HOST.CONN}&quot;, &quot;volumes&quot;]</key>
+                    <delay>{$LLD}</delay>
                     <status>0</status>
                     <allowed_hosts/>
                     <snmpv3_contextname/>
@@ -1096,10 +1105,10 @@ Health shatuses in most cases:&#13;
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;, &quot;-g&quot;, &quot;{#VOLUME.ID}&quot;]</key>
-                            <delay>{$MSA_UPDATE_1M}</delay>
-                            <history>{$MSA_HISTORY}</history>
-                            <trends>{$MSA_TRENDS}</trends>
+                            <key>zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;volumes&quot;, &quot;{#VOLUME.ID}&quot;]</key>
+                            <delay>{$UPDATE}</delay>
+                            <history>{$HISTORY}</history>
+                            <trends>{$TRENDS}</trends>
                             <status>0</status>
                             <value_type>3</value_type>
                             <allowed_hosts/>
@@ -1132,7 +1141,9 @@ Health shatuses in most cases:&#13;
                                     <name>MSA Volumes</name>
                                 </application>
                             </applications>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing/>
                             <jmx_endpoint/>
@@ -1142,13 +1153,13 @@ Health shatuses in most cases:&#13;
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HPE MSA 1040-2040 Plus:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;volumes&quot;, &quot;-g&quot;, &quot;{#VOLUME.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
+                            <expression>{Template HPE MSA for Zabbix 3.4:zbx-hpmsa.py[&quot;-a&quot;, &quot;{$API.VER}&quot;, &quot;health&quot;, &quot;{HOST.CONN}&quot;, &quot;volumes&quot;, &quot;{#VOLUME.ID}&quot;].avg(#3)}&lt;&gt;0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Volume {#VOLUME.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Volume {#VOLUME.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -1171,24 +1182,51 @@ Health shatuses in most cases:&#13;
             <httptests/>
             <macros>
                 <macro>
-                    <macro>{$MSA_HISTORY}</macro>
+                    <macro>{$API.VER}</macro>
+                    <value>2</value>
+                </macro>
+                <macro>
+                    <macro>{$HISTORY}</macro>
                     <value>14d</value>
                 </macro>
                 <macro>
-                    <macro>{$MSA_TRENDS}</macro>
+                    <macro>{$LLD}</macro>
+                    <value>1h</value>
+                </macro>
+                <macro>
+                    <macro>{$TRENDS}</macro>
                     <value>180d</value>
                 </macro>
                 <macro>
-                    <macro>{$MSA_UPDATE_1M}</macro>
+                    <macro>{$UPDATE}</macro>
                     <value>1m</value>
-                </macro>
-                <macro>
-                    <macro>{$MSA_UPDATE_5M}</macro>
-                    <value>5m</value>
                 </macro>
             </macros>
             <templates/>
             <screens/>
         </template>
     </templates>
+    <value_maps>
+        <value_map>
+            <name>HPE MSA Health</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>OK</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Degraded</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>Fault</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>N/A</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
 </zabbix_export>
