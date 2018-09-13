@@ -1490,7 +1490,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             <name>Controller {#CONTROLLER.ID} ping failed</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} doesn't responce on ping.</description>
@@ -1574,7 +1574,7 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             <name>Web interface on controller {#CONTROLLER.ID} ({#CONTROLLER.IP}) is down</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>1</priority>
                             <description>Cannot connect to controller {#CONTROLLER.ID} web interface.</description>
