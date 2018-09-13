@@ -217,7 +217,7 @@
                             <name>Controller {#CONTROLLER.ID} health status is {ITEM.LASTVALUE}</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} with SN {#CONTROLLER.SN} and IP {#CONTROLLER.IP} health status is {ITEM.LASTVALUE}.</description>
@@ -238,7 +238,7 @@
                             <name>Controller {#CONTROLLER.ID} ping failed</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Controller {#CONTROLLER.ID} doesn't responce on ping.</description>
@@ -259,7 +259,7 @@
                             <name>Web interface on controller {#CONTROLLER.ID} ({#CONTROLLER.IP}) is down</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>1</priority>
                             <description>Cannot connect to controller {#CONTROLLER.ID} web interface.</description>
@@ -375,7 +375,7 @@
                             <name>Disk group {#DG.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Disk group {#DG.ID} health status in {ITEM.LASTVALUE}.</description>
@@ -485,7 +485,7 @@
                             <name>Physical disk in slot {#DISK.ID} is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Physical disk in slot {#DISK.ID} with SN {#DISK.SN} has status {ITEM.LASTVALUE}.</description>
@@ -595,7 +595,7 @@
                             <name>Enclosure {#ENCLOSURE.ID} health status is {ITEM.LASTVALUE}</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Enclosure {#ENCLOSURE.ID} with SN {#ENCLOSURE.SN} health status is {ITEM.LASTVALUE}.</description>
@@ -705,7 +705,7 @@
                             <name>Fan {#FAN.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Fan {#FAN.ID} in {#FAN.LOCATION} health status is {ITEM.LASTVALUE}.</description>
@@ -815,7 +815,7 @@
                             <name>Pool {#POOL.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Pool {#POOL.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -932,7 +932,7 @@
                             <name>Port {#PORT.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Port {#PORT.ID} health status is {ITEM.LASTVALUE}.</description>
@@ -1042,7 +1042,7 @@
                             <name>Power supply {#POWERSUPPLY.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Power supply {#POWERSUPPLY.ID} in {#POWERSUPPLY.LOCATION} health status is {ITEM.LASTVALUE}.</description>
@@ -1159,7 +1159,7 @@
                             <name>Volume {#VOLUME.ID} health status is not OK</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
-                            <url>https://zabbix.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <url>https://zabbix.domain.com/tr_status.php?hostid={HOST.ID}</url>
                             <status>0</status>
                             <priority>2</priority>
                             <description>Volume {#VOLUME.ID} health status is {ITEM.LASTVALUE}.</description>
