@@ -232,7 +232,7 @@ def query_xmlapi(url, sessionkey):
         # Connection timeout in seconds (connection, read).
         timeout = (1, 3)
         full_url = 'https://' + url if USE_HTTPS else 'http://' + url
-        headers = {'sessionKey': sessionkey} if API_VERSION == 1 else {
+        headers = {'sessionKey': sessionkey} if API_VERSION == 2 else {
             'Cookie': "wbiusername={}; wbisessionkey={}".format(MSA_USERNAME, sessionkey)}
         if USE_HTTPS:
             if VERIFY_SSL:
@@ -712,7 +712,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.6'
+    VERSION = '0.6.1'
     MSA_PARTS = ('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
                  'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes')
 
