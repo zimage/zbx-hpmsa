@@ -64,7 +64,7 @@ zbx-hpmsa.py["-m", "{HOST.CONN}", "-g", "full", "-c", "disk-groups"]  vs  zbx-hp
 
 ## Usage
 You can find more examples on Wiki page, but I placed some cases here too. Be noticed - syntax of v0.5 and v0.6 differs!  
-- LLD of enclosures, controllers, virtual disks and physical disks:
+- LLD of enclosures, controllers, virtual disks and physical disks:  
 Before v0.6:  
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --discovery --msa 10.0.0.1 --component vdisks
@@ -76,7 +76,7 @@ With v0.6:
 {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
 ```
 
-- Request health status of one component. E.g. disk '1.1':
+- Request health status of one component. E.g. disk '1.1':  
 Before v0.6:  
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --msa 10.0.0.1 --component disks --get 1.1
@@ -88,7 +88,7 @@ With v0.6:
 [user@server ~] # ./zbx-hpmsa.py health 10.0.0.1 disks 1.1
 OK
 ```
-- Request full available data in JSON. E.g. all disks or controller 'A':
+- Request full available data in JSON. E.g. all disks or controller 'A':  
 Before v0.6:
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --msa 10.0.0.1 --component disks --get-health full
