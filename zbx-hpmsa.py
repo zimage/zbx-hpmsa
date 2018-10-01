@@ -133,12 +133,12 @@ def display_cache():
             name, ip, proto, datetime.fromtimestamp(float(expired)).strftime("%H:%M:%S %d.%m.%Y"), sessionkey))
 
 
-def get_skey(storage, hashed_login, use_cache=True):
+def get_skey(msa, hashed_login, use_cache=True):
     """
     Get session key from HP MSA API and and print it.
 
-    :param storage: Storage IP address or DNS name.
-    :type storage: str
+    :param msa: MSA IP address and DNS name.
+    :type msa: tuple
     :param hashed_login: Hashed with md5 login data.
     :type hashed_login: str
     :param use_cache: The function will try to save session key to disk.
@@ -147,53 +147,50 @@ def get_skey(storage, hashed_login, use_cache=True):
     :rtype: str
     """
 
-    # Get MSA IP from name
-    msa_ip = gethostbyname(storage)
-
     # Trying to use cached session key
     if use_cache:
         cur_timestamp = datetime.timestamp(datetime.utcnow())
-        if not USE_HTTPS:  # http
-            cache_data = sql_cmd('SELECT expired,skey FROM skey_cache WHERE ip="{}" AND proto="http"'.format(storage))
+        if not USE_SSL:  # http
+            cache_data = sql_cmd('SELECT expired,skey FROM skey_cache WHERE ip="{}" AND proto="http"'.format(msa[0]))
         else:  # https
             cache_data = sql_cmd('SELECT expired,skey '
                                  'FROM skey_cache '
-                                 'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(storage, msa_ip)
+                                 'WHERE dns_name="{}" AND IP ="{}" AND proto="https"'.format(msa[1], msa[0])
                                  )
         if cache_data is not None:
             cache_expired, cached_skey = cache_data
             if cur_timestamp < float(cache_expired):
                 return cached_skey
             else:
-                return get_skey(storage, hashed_login, use_cache=False)
+                return get_skey(msa, hashed_login, use_cache=False)
         else:
-            return get_skey(storage, hashed_login, use_cache=False)
+            return get_skey(msa, hashed_login, use_cache=False)
     else:
         # Forming URL and trying to make GET query
-        login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=hashed_login)
-        ret_code, sessionkey, xml = query_xmlapi(url=login_url, sessionkey=None)
+        msa_conn = msa[1] if VERIFY_SSL else msa[0]
+        url = '{}/api/login/{}'.format(msa_conn, hashed_login)
+        ret_code, sessionkey, xml = query_xmlapi(url=url, sessionkey=None)
 
         # 1 - success, write sessionkey to DB and return it
         if ret_code == '1':
-            expired = datetime.timestamp(datetime.utcnow() + timedelta(hours=12))
-            if not USE_HTTPS:
-                cache_data = sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(storage))
+            expired = datetime.timestamp(datetime.utcnow() + timedelta(hours=6))
+            if not USE_SSL:
+                cache_data = sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(msa[0]))
                 if cache_data is None:
                     sql_cmd('INSERT INTO skey_cache VALUES ('
-                            '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=storage, ip=storage,
+                            '"{dns}", "{ip}", "http", "{time}", "{skey}")'.format(dns=msa[1], ip=msa[0],
                                                                                   time=expired, skey=sessionkey)
                             )
                 else:
                     sql_cmd('UPDATE skey_cache SET skey="{skey}", expired="{expired}" '
-                            'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey, expired=expired, ip=storage)
+                            'WHERE ip="{ip}" AND proto="http"'.format(skey=sessionkey, expired=expired, ip=msa[0])
                             )
             else:
                 cache_data = sql_cmd('SELECT dns_name, ip FROM skey_cache '
-                                     'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(storage, msa_ip))
+                                     'WHERE dns_name="{}" AND ip="{}" AND proto="https"'.format(msa[1], msa[0]))
                 if cache_data is None:
                     sql_cmd('INSERT INTO skey_cache VALUES ('
-                            '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=storage,
-                                                                                       ip=msa_ip,
+                            '"{name}", "{ip}", "https", "{expired}", "{skey}")'.format(name=msa[1], ip=msa[0],
                                                                                        expired=expired,
                                                                                        skey=sessionkey
                                                                                        )
@@ -202,8 +199,8 @@ def get_skey(storage, hashed_login, use_cache=True):
                     sql_cmd('UPDATE skey_cache SET skey = "{skey}", expired = "{expired}" '
                             'WHERE dns_name="{name}" AND ip="{ip}" AND proto="https"'.format(skey=sessionkey,
                                                                                              expired=expired,
-                                                                                             name=storage,
-                                                                                             ip=msa_ip
+                                                                                             name=msa[1],
+                                                                                             ip=msa[0]
                                                                                              )
                             )
             return sessionkey
@@ -231,10 +228,10 @@ def query_xmlapi(url, sessionkey):
     try:
         # Connection timeout in seconds (connection, read).
         timeout = (1, 3)
-        full_url = 'https://' + url if USE_HTTPS else 'http://' + url
+        full_url = 'https://' + url if USE_SSL else 'http://' + url
         headers = {'sessionKey': sessionkey} if API_VERSION == 2 else {
             'Cookie': "wbiusername={}; wbisessionkey={}".format(MSA_USERNAME, sessionkey)}
-        if USE_HTTPS:
+        if USE_SSL:
             if VERIFY_SSL:
                 response = requests.get(full_url, headers=headers, verify=ca_file, timeout=timeout)
             else:
@@ -266,12 +263,12 @@ def query_xmlapi(url, sessionkey):
         raise SystemExit("ERROR: Cannot parse XML. {}".format(e))
 
 
-def get_health(storage, component, item, sessionkey):
+def get_health(msa, component, item, sessionkey):
     """
     Get health status of single MSA part.
 
-    :param storage: Storage DNS name or IP address.
-    :type storage: str
+    :param msa: MSA DNS name and IP address.
+    :type msa: tuple
     :param sessionkey: Session key.
     :type sessionkey: str
     :param component: Storage component name.
@@ -289,10 +286,11 @@ def get_health(storage, component, item, sessionkey):
     }
 
     # Forming url
+    msa_conn = msa[1] if VERIFY_SSL else msa[0]
     if component in ('vdisks', 'disks'):
-        url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
+        url = '{strg}/api/show/{comp}/{item}'.format(strg=msa_conn, comp=component, item=item)
     else:
-        url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+        url = '{strg}/api/show/{comp}'.format(strg=msa_conn, comp=component)
 
     # Make a query to API
     ret_code, descr, xml = query_xmlapi(url, sessionkey)
@@ -316,12 +314,12 @@ def get_health(storage, component, item, sessionkey):
     return health
 
 
-def make_lld(storage, component, sessionkey):
+def make_lld(msa, component, sessionkey):
     """
     Form LLD JSON for Zabbix server.
 
-    :param storage: Storage DNS name or IP address.
-    :type storage: str
+    :param msa: MSA DNS name and IP address.
+    :type msa: tuple
     :param sessionkey: Session key.
     :type sessionkey: str
     :param component: Name of storage component.
@@ -331,7 +329,8 @@ def make_lld(storage, component, sessionkey):
     """
 
     # Forming URL
-    url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+    msa_conn = msa[1] if VERIFY_SSL else msa[0]
+    url = '{strg}/api/show/{comp}'.format(strg=msa_conn, comp=component)
 
     # Making request to API
     resp_return_code, resp_description, xml = query_xmlapi(url, sessionkey)
@@ -445,12 +444,12 @@ def make_lld(storage, component, sessionkey):
     return json.dumps({"data": all_components}, separators=(',', ':'))
 
 
-def get_full_json(storage, component, sessionkey):
+def get_full_json(msa, component, sessionkey):
     """
     Form text in JSON with storage component data.
 
-    :param storage: Storage DNS name or IP address.
-    :type storage: str
+    :param msa: MSA DNS name and IP address.
+    :type msa: tuple
     :param sessionkey: Session key.
     :type sessionkey: str
     :param component: Name of storage component.
@@ -460,7 +459,8 @@ def get_full_json(storage, component, sessionkey):
     """
 
     # Forming URL
-    url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
+    msa_conn = msa[1] if VERIFY_SSL else msa[0]
+    url = '{strg}/api/show/{comp}'.format(strg=msa_conn, comp=component)
 
     # Making request to API
     resp_return_code, resp_description, xml = query_xmlapi(url, sessionkey)
@@ -582,7 +582,7 @@ def get_full_json(storage, component, sessionkey):
             ctrl_rd_status_num = PROP.find("./PROPERTY[@name='redundancy-status-numeric']").text
 
             # Get controller statistics
-            url = '{strg}/api/show/{comp}'.format(strg=storage, comp='controller-statistics')
+            url = '{strg}/api/show/{comp}'.format(strg=msa_conn, comp=component)
 
             # Making request to API
             stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
@@ -712,7 +712,7 @@ def get_full_json(storage, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.6.1'
+    VERSION = '0.6.2'
     MSA_PARTS = ('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
                  'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes')
 
@@ -779,13 +779,14 @@ if __name__ == '__main__':
     if args.command in ('lld', 'full', 'health'):
         # Set some global variables
         SAVE_XML = args.save_xml
-        USE_HTTPS = args.ssl in ('direct', 'verify')
+        USE_SSL = args.ssl in ('direct', 'verify')
         VERIFY_SSL = args.ssl == 'verify'
         MSA_USERNAME = args.username
         MSA_PASSWORD = args.password
 
-        # Connection address
-        MSA_CONNECT = args.msa if VERIFY_SSL else gethostbyname(args.msa)
+        # (IP, DNS)
+        IS_IP = all(elem.isdigit() for elem in args.msa.split('.'))
+        MSA_CONNECT = args.msa if IS_IP else gethostbyname(args.msa), args.msa
 
         # Make login hash string
         if args.login_file is not None:
