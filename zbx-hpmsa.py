@@ -582,7 +582,7 @@ def get_full_json(msa, component, sessionkey):
             ctrl_rd_status_num = PROP.find("./PROPERTY[@name='redundancy-status-numeric']").text
 
             # Get controller statistics
-            url = '{strg}/api/show/{comp}'.format(strg=msa_conn, comp=component)
+            url = '{strg}/api/show/{comp}'.format(strg=msa_conn, comp='controller-statistics')
 
             # Making request to API
             stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
