@@ -173,7 +173,7 @@ def get_skey(msa, hashed_login, use_cache=True):
 
         # 1 - success, write sessionkey to DB and return it
         if ret_code == '1':
-            expired = datetime.timestamp(datetime.utcnow() + timedelta(hours=6))
+            expired = datetime.timestamp(datetime.utcnow() + timedelta(minutes=30))
             if not USE_SSL:
                 cache_data = sql_cmd('SELECT ip FROM skey_cache WHERE ip = "{}" AND proto="http"'.format(msa[0]))
                 if cache_data is None:
@@ -712,7 +712,7 @@ def get_full_json(msa, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.6.2'
+    VERSION = '0.6.3'
     MSA_PARTS = ('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
                  'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes')
 
