@@ -1,5 +1,5 @@
 # zbx-hpmsa
-Utility for retrieve hardware info from HPE MSA storage via XML API for Zabbix Monitoring Platform.
+Utility for retrieve hardware info from HPE MSA storage via XML API for Zabbix Monitoring Platform.  
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with Telegram: @asand3r
 
