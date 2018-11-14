@@ -390,10 +390,12 @@ def make_lld(msa, component, sessionkey):
             ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
             ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
             ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
+            ctrl_wwn = ctrl.find("./PROPERTY[@name='node-wwn']").text
             lld_dict = {
                 "{#CONTROLLER.ID}": "{}".format(ctrl_id),
                 "{#CONTROLLER.SN}": "{}".format(ctrl_sn),
-                "{#CONTROLLER.IP}": "{}".format(ctrl_ip)
+                "{#CONTROLLER.IP}": "{}".format(ctrl_ip),
+                "{#CONTROLLER.WWN}": "{}".format(ctrl_wwn),
             }
             all_components.append(lld_dict)
     elif component == 'enclosures':
@@ -574,6 +576,7 @@ def get_full_json(msa, component, sessionkey):
         for PROP in xml.findall("./OBJECT[@name='controllers']"):
             # Processing main controller properties
             ctrl_id = PROP.find("./PROPERTY[@name='controller-id']").text
+            ctrl_sc_fw = PROP.find("./PROPERTY[@name='sc-fw']").text
             ctrl_health = PROP.find("./PROPERTY[@name='health']").text
             ctrl_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             ctrl_status = PROP.find("./PROPERTY[@name='status']").text
@@ -602,7 +605,8 @@ def get_full_json(msa, component, sessionkey):
                 "redundancy": ctrl_rd_status,
                 "redundancy-num": ctrl_rd_status_num,
                 "cpu-load": ctrl_cpu_load,
-                "iops": ctrl_iops
+                "iops": ctrl_iops,
+                "sc-fw": ctrl_sc_fw
             }
 
             # Processing advanced controller properties
@@ -712,7 +716,7 @@ def get_full_json(msa, component, sessionkey):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.6.4'
+    VERSION = '0.6.5'
     MSA_PARTS = ('disks', 'vdisks', 'controllers', 'enclosures', 'fans',
                  'power-supplies', 'ports', 'pools', 'disk-groups', 'volumes')
 
