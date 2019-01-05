@@ -595,6 +595,14 @@ def get_full_json(msa, component, sessionkey):
             # THINK: I don't know, is it good solution, but it's one more query to XML API
             ctrl_cpu_load = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='cpu-load']").text
             ctrl_iops = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='iops']").text
+            ctrl_number_of_reads = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='number-of-reads']").text
+            ctrl_number_of_writes = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='number-of-writes']").text
+            ctrl_data_read_numeric = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='data-read-numeric']").text
+            ctrl_data_written_numeric = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='data-written-numeric']").text
+            ctrl_read_cache_hits = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='read-cache-hits']").text
+            ctrl_read_cache_misses = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='read-cache-misses']").text
+            ctrl_write_cache_hits = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='write-cache-hits']").text
+            ctrl_write_cache_misses = stats_xml.find("./OBJECT[@name='controller-statistics']/PROPERTY[@name='write-cache-misses']").text
 
             # Making full controller dict
             ctrl_full_data = {
@@ -606,6 +614,14 @@ def get_full_json(msa, component, sessionkey):
                 "redundancy-num": ctrl_rd_status_num,
                 "cpu-load": ctrl_cpu_load,
                 "iops": ctrl_iops,
+                "number-of-reads": ctrl_number_of_reads,
+                "number-of-writes": ctrl_number_of_writes,
+                "data-read-numeric": ctrl_data_read_numeric,
+                "data-written-numeric": ctrl_data_written_numeric,
+                "read-cache-hits": ctrl_read_cache_hits,
+                "read-cache-misses": ctrl_read_cache_misses,
+                "write-cache-hits": ctrl_write_cache_hits,
+                "write-cache-misses": ctrl_write_cache_misses,
                 "sc-fw": ctrl_sc_fw
             }
 
