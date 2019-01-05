@@ -543,6 +543,25 @@ def get_full_json(msa, component, sessionkey):
             dg_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             dg_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
             dg_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
+
+            # Get controller statistics
+            url = '{strg}/api/show/{comp}/disk-group/{item}'.format(strg=msa_conn, comp='disk-group-statistics', item=dg_name)
+
+            # Making request to API
+            stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
+            if stats_ret_code != '0':
+                raise SystemExit('ERROR: {} : {}'.format(stats_ret_code, stats_descr))
+
+            # THINK: I don't know, is it good solution, but it's one more query to XML API
+            dg_number_of_reads = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='number-of-reads']").text
+            dg_number_of_writes = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='number-of-writes']").text
+            dg_data_read_numeric = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='data-read-numeric']").text
+            dg_data_written_numeric = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='data-written-numeric']").text
+            dg_iops = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='iops']").text
+            dg_avg_rsp_time = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='avg-rsp-time']").text
+            dg_avg_read_rsp_time = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='avg-read-rsp-time']").text
+            dg_avg_write_rsp_time = stats_xml.find("./OBJECT[@name='disk-group-statistics']/PROPERTY[@name='avg-write-rsp-time']").text
+
             dg_full_data = {
                 "health": dg_health,
                 "health-num": dg_health_num,
@@ -551,7 +570,15 @@ def get_full_json(msa, component, sessionkey):
                 "owner": dg_owner,
                 "owner-num": dg_owner_num,
                 "owner-pref": dg_owner_pref,
-                "owner-pref-num": dg_owner_pref_num
+                "owner-pref-num": dg_owner_pref_num,
+                "number-of-reads": dg_number_of_reads,
+                "number-of-writes": dg_number_of_writes,
+                "data-read-numeric": dg_data_read_numeric,
+                "data-written-numeric": dg_data_written_numeric,
+                "iops": dg_iops,
+                "avg-rsp-time": dg_avg_rsp_time,
+                "avg-read-rsp-time": dg_avg_read_rsp_time,
+                "avg-write-rsp-time": dg_avg_write_rsp_time
             }
             all_components[dg_name] = dg_full_data
     elif component == 'volumes':
