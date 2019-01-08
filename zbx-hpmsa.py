@@ -817,10 +817,37 @@ def get_full_json(msa, component, sessionkey):
             port_name = FC.find("./PROPERTY[@name='port']").text
             port_health = FC.find("./PROPERTY[@name='health']").text
             port_health_num = FC.find("./PROPERTY[@name='health-numeric']").text
+
+            # Get host port statistics
+            url = '{strg}/api/show/{comp}/ports/{item}'.format(strg=msa_conn, comp='host-port-statistics', item=port_name)
+
+            # Making request to API
+            stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
+            if stats_ret_code != '0':
+                raise SystemExit('ERROR: {} : {}'.format(stats_ret_code, stats_descr))
+
+            # THINK: I don't know, is it good solution, but it's one more query to XML API
+            port_number_of_reads = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='number-of-reads']").text
+            port_number_of_writes = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='number-of-writes']").text
+            port_data_read_numeric = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='data-read-numeric']").text
+            port_data_written_numeric = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='data-written-numeric']").text
+            port_queue_depth = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='queue-depth']").text
+            port_avg_rsp_time = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='avg-rsp-time']").text
+            port_avg_read_rsp_time = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='avg-read-rsp-time']").text
+            port_avg_write_rsp_time = stats_xml.find("./OBJECT[@name='host-port-statistics']/PROPERTY[@name='avg-write-rsp-time']").text
+
             if port_health_num != '4':
                 port_full_data = {
                     "health": port_health,
-                    "health-num": port_health_num
+                    "health-num": port_health_num,
+                    "number-of-reads": port_number_of_reads,
+                    "number-of-writes": port_number_of_writes,
+                    "data-read-numeric": port_data_read_numeric,
+                    "data-written-numeric": port_data_written_numeric,
+                    "queue-depth": port_queue_depth,
+                    "avg-rsp-time": port_avg_rsp_time,
+                    "avg-read-rsp-time": port_avg_read_rsp_time,
+                    "avg-write-rsp-time": port_avg_write_rsp_time,
                 }
 
                 # Processing advanced ports properties
