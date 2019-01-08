@@ -544,7 +544,7 @@ def get_full_json(msa, component, sessionkey):
             dg_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
             dg_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
 
-            # Get controller statistics
+            # Get disk-group statistics
             url = '{strg}/api/show/{comp}/disk-group/{item}'.format(strg=msa_conn, comp='disk-group-statistics', item=dg_name)
 
             # Making request to API
