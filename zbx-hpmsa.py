@@ -576,13 +576,38 @@ def get_full_json(msa, component, sessionkey):
             pool_owner_num = PROP.find("./PROPERTY[@name='owner-numeric']").text
             pool_owner_pref = PROP.find("./PROPERTY[@name='preferred-owner']").text
             pool_owner_pref_num = PROP.find("./PROPERTY[@name='preferred-owner-numeric']").text
+
+            # Get pool statistics
+            url = '{strg}/api/show/{comp}/pools/{item}'.format(strg=msa_conn, comp='pool-statistics', item=pool_name)
+
+            # Making request to API
+            stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
+            if stats_ret_code != '0':
+                raise SystemExit('ERROR: {} : {}'.format(stats_ret_code, stats_descr))
+
+            # THINK: I don't know, is it good solution, but it's one more query to XML API
+            pool_number_of_reads = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='number-of-reads']").text
+            pool_number_of_writes = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='number-of-writes']").text
+            pool_data_read_numeric = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='data-read-numeric']").text
+            pool_data_written_numeric = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='data-written-numeric']").text
+            pool_avg_rsp_time = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='avg-rsp-time']").text
+            pool_avg_read_rsp_time = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='avg-read-rsp-time']").text
+            pool_avg_write_rsp_time = stats_xml.find("./OBJECT[@name='pool-statistics']/OBJECT[@name='resettable-statistics']/PROPERTY[@name='avg-write-rsp-time']").text
+
             pool_full_data = {
                 "health": pool_health,
                 "health-num": pool_health_num,
                 "owner": pool_owner,
                 "owner-num": pool_owner_num,
                 "owner-pref": pool_owner_pref,
-                "owner-pref-num": pool_owner_pref_num
+                "owner-pref-num": pool_owner_pref_num,
+                "number-of-reads": pool_number_of_reads,
+                "number-of-writes": pool_number_of_writes,
+                "data-read-numeric": pool_data_read_numeric,
+                "data-written-numeric": pool_data_written_numeric,
+                "avg-rsp-time": pool_avg_rsp_time,
+                "avg-read-rsp-time": pool_avg_read_rsp_time,
+                "avg-write-rsp-time": pool_avg_write_rsp_time,
             }
             all_components[pool_name] = pool_full_data
     elif component == 'disk-groups':
