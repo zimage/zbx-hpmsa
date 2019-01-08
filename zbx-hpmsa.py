@@ -478,10 +478,63 @@ def get_full_json(msa, component, sessionkey):
             disk_health = PROP.find("./PROPERTY[@name='health']").text
             disk_health_num = PROP.find("./PROPERTY[@name='health-numeric']").text
             disk_error = PROP.find("./PROPERTY[@name='error']").text
+
+            # Get disk statistics
+            url = '{strg}/api/show/{comp}/{item}'.format(strg=msa_conn, comp='disk-statistics', item=disk_location)
+
+            # Making request to API
+            stats_ret_code, stats_descr, stats_xml = query_xmlapi(url, sessionkey)
+            if stats_ret_code != '0':
+                raise SystemExit('ERROR: {} : {}'.format(stats_ret_code, stats_descr))
+
+            # THINK: I don't know, is it good solution, but it's one more query to XML API
+            disk_number_of_reads = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-reads']").text
+            disk_number_of_writes = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-writes']").text
+            disk_data_read_numeric = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='data-read-numeric']").text
+            disk_data_written_numeric = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='data-written-numeric']").text
+            disk_queue_depth = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='queue-depth']").text
+            disk_smart_count_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='smart-count-1']").text
+            disk_io_timeout_count_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='io-timeout-count-1']").text
+            disk_no_response_count_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='no-response-count-1']").text
+            disk_spinup_retry_count_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='spinup-retry-count-1']").text
+            disk_number_of_media_errors_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-media-errors-1']").text
+            disk_number_of_nonmedia_errors_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-nonmedia-errors-1']").text
+            disk_number_of_block_reassigns_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-block-reassigns-1']").text
+            disk_number_of_bad_blocks_1 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-bad-blocks-1']").text
+            disk_smart_count_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='smart-count-2']").text
+            disk_io_timeout_count_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='io-timeout-count-2']").text
+            disk_no_response_count_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='no-response-count-2']").text
+            disk_spinup_retry_count_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='spinup-retry-count-2']").text
+            disk_number_of_media_errors_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-media-errors-2']").text
+            disk_number_of_nonmedia_errors_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-nonmedia-errors-2']").text
+            disk_number_of_block_reassigns_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-block-reassigns-2']").text
+            disk_number_of_bad_blocks_2 = stats_xml.find("./OBJECT[@name='disk-statistics']/PROPERTY[@name='number-of-bad-blocks-2']").text
+
             disk_full_data = {
                 "health": disk_health,
                 "health-num": disk_health_num,
-                "error": disk_error
+                "error": disk_error,
+                "number-of-reads": disk_number_of_reads,
+                "number-of-writes": disk_number_of_writes,
+                "data-read-numeric": disk_data_read_numeric,
+                "data-written-numeric": disk_data_written_numeric,
+                "queue-depth": disk_queue_depth,
+                "smart-count-1": disk_smart_count_1,
+                "io-timeout-count-1": disk_io_timeout_count_1,
+                "no-response-count-1": disk_no_response_count_1,
+                "spinup-retry-count-1": disk_spinup_retry_count_1,
+                "number-of-media-errors-1": disk_number_of_media_errors_1,
+                "number-of-nonmedia-errors-1": disk_number_of_nonmedia_errors_1,
+                "number-of-block-reassigns-1": disk_number_of_block_reassigns_1,
+                "number-of-bad-blocks-1": disk_number_of_bad_blocks_1,
+                "smart-count-2": disk_smart_count_2,
+                "io-timeout-count-2": disk_io_timeout_count_2,
+                "no-response-count-2": disk_no_response_count_2,
+                "spinup-retry-count-2": disk_spinup_retry_count_2,
+                "number-of-media-errors-2": disk_number_of_media_errors_2,
+                "number-of-nonmedia-errors-2": disk_number_of_nonmedia_errors_2,
+                "number-of-block-reassigns-2": disk_number_of_block_reassigns_2,
+                "number-of-bad-blocks-2": disk_number_of_bad_blocks_2,
             }
 
             # Processing advanced properties
