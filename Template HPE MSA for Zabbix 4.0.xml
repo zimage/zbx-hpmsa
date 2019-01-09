@@ -2255,7 +2255,9 @@ But, in my case it's lies. &quot;Redundant&quot; equals &quot;2&quot;.&#13;
                             <description>Disk group {#DG.ID} with type {#DG.TYPE} health status (numeric).</description>
                             <inventory_link>0</inventory_link>
                             <applications/>
-                            <valuemap/>
+                            <valuemap>
+                                <name>HPE MSA Disk Health</name>
+                            </valuemap>
                             <logtimefmt/>
                             <preprocessing>
                                 <step>
